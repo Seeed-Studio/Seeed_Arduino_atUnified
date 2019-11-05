@@ -8,27 +8,6 @@ typedef std::string String;
 #include<stdio.h>
 #include<string.h>
 
-#define AT              "AT"
-#define RST             "+RST"
-#define GMR             "+GMR"
-#define ATE             "ATE"
-#define GSLP            "+GSLP"
-#define SLEEP           "+SLEEP"
-#define UART_CUR        "+UART_CUR"
-#define UART_DEF        "+UART_DEF"
-#define SYSRAM          "+SYSRAM"
-#define SYSFLASH     
-#define FS           
-#define RFPOWER         "+RFPOWER"
-
-#define END_LINE        "\r\n"
-#define TOKEN           ":"
-#define TOKEN_OFFSET    2
-#define AT_ERROR        "ERROR"
-#define AT_OK           "OK"
-#define AT_READY        "ready"
-#define SET             "="
-#define ASK             "?"
 
 #define CMD(name,...)                       \
 inline bool name(__VA_ARGS__) {             \
@@ -38,9 +17,14 @@ inline bool name(__VA_ARGS__) {             \
 #define $                return waitFlag(); }
 #define debug(...)       Serial.printf(__VA_ARGS__);
 
+
+constexpr bool disable = false;
+constexpr bool enable = true;
+
 constexpr bool fail = false;
 constexpr bool success = true;
 volatile  bool needWaitWeekup = false;
+bool           idEndLine = true;
 
 #define USE_AT_SERIAL1
 
@@ -55,7 +39,6 @@ volatile  bool needWaitWeekup = false;
     auto & com = Seria2;
 #endif
 
-bool atTest();
 
 #ifdef USE_SERIAL_COM
     bool available(){
@@ -75,19 +58,17 @@ bool atTest();
         debug(value);
     }
     bool atBegin(){
+        bool atTest();
         com.begin(115200);
+        while(readLine().length());
         return atTest();
     }
 #endif
 
-enum state{
-    ok,
-    over,
-};
-
 bool waitFlag(){
     while(true){
         String ack = readLine();
+        //debug("E:%s\n", ack.c_str());
         if (ack == AT_OK){
             return success;
         }
@@ -97,70 +78,39 @@ bool waitFlag(){
     }
 }
 
-enum class hex_t : int32_t {};
+enum hex_t : int32_t {};
+enum mac_t : uint8_t {};
+enum ip_t : uint8_t {};
 
-struct any{
-    any(int32_t * v) : v(v), isHex(false), skip(0){}
-    any(hex_t * v)   : v(v), isHex(true ), skip(0){}
-    any(String * v)  : v(v), isHex(false), skip(0){}
-    any(const char * v) :    isHex(false), skip(strlen(v)){}
-    any(char v) :    isHex(false), skip(1){}
-    template<class type> void set(type const & value){
-        *(type *)v = value;
-    }
-    void *  v;
-    uint8_t skip;
-    bool    isHex;
+enum any_type{
+    none,
+    digital,
+    hex,
+    string,
+    ip,
 };
 
-template<class ... arg>
-bool subrx(const char * prefix, any * list){
-    String  resp = readLine();
-    auto    str = (char *)resp.c_str();
-    auto    len = strlen(prefix);
-
-    if (resp.indexOf(prefix) != 0){
-        return fail;
+struct any{
+    any(ip_t * v)    : v(v), type(ip),      skip(0){}
+    any(hex_t * v)   : v(v), type(hex),     skip(0){}
+    any(int32_t * v) : v(v), type(digital), skip(0){}
+    any(String * v)  : v(v), type(string),  skip(0){}
+    any(const char * v) :    type(none),    skip(strlen(v)){}
+    any(char v) :            type(none),    skip(1){}
+    template<class type> 
+    void set(type const & value){
+        *(type *)v = value;
     }
+    void *   v;
+    uint8_t  skip;
+    any_type type;
+};
 
-    str += len;
-    
-    while(str[0]){
-        if (str[0] == ','){
-            str += 1;
-            continue;
-        }
-        if (list->skip){
-            str += list->skip;
-            list += 1;
-        }
-        if (str[0] == '\"'){
-            str += 1;
-            auto len = strchr(str, '\"') - str;
-            str[len] = '\0';
-            list->set<String>(str);
-            str += len + 1;
-        }
-        else{
-            auto end = str;
-            for (; isxdigit(end[0]); end++){
-                ;
-            }
-            sscanf(str, list->isHex ? "%x" : "%d", list->v);
-            str = end;
-        }
-
-        //DON't do this: for(;; list += 1)
-        list += 1;
-    }
-    return success;
-}
 
 template<class ... arg>
 bool rx(char * prefix, arg ... list){
     any     ls[] = { list... };
-    any   * v = ls;
-    return subrx(prefix, v);
+    return subrx(prefix, ls);
 }
 
 enum class txMore{ };
@@ -173,20 +123,52 @@ void write(int32_t value){
 }
 
 void write(String const & value){
+    write("\"");
     write(value.c_str());
+    write("\"");
 }
 
-void tx(txMore){
+void write(ip_t * ip){
+    write(ip[0]); write(".");
+    write(ip[1]); write(".");
+    write(ip[2]); write(".");
+    write(ip[3]);
 }
+
+void write(mac_t one){
+    const char * map = "0123456789abcdef";
+    char buf[] = { 
+        map[one & 0xf], 
+        map[one >> 0xf], '\0' };
+    write(buf);
+}
+
+void write(mac_t * mac){
+    write(mac[0]); write(":");
+    write(mac[1]); write(":");
+    write(mac[2]); write(":");
+    write(mac[3]); write(":");
+    write(mac[4]); write(":");
+    write(mac[5]); write(":");
+    write(mac[6]); write(":");
+    write(mac[7]);
+}
+
+void tx(txMore){}
 
 void tx(){
     write("\r\n");
+    idEndLine = true;
 }
+
 
 template<class first, class ... arg>
 void tx(first a, arg ... list){
     write(a);
-    if (sizeof...(list)){
+    if (idEndLine){
+        idEndLine = false;
+    }
+    else if (sizeof...(list)){
         write(",");
     }
     tx(list...);
@@ -196,6 +178,13 @@ enum class actionMode{
     waitReady,
     async,
 };
+
+template<class a, class b>
+void copy(a * des, b const * src, size_t length){
+    while (length--) {
+        des[length] = (a)src[length];
+    }
+}
 
 void waitReady(){
     while(readLine() != AT_READY){
@@ -238,10 +227,10 @@ public:
 
 CMD(atFirmwareInfo, FirmwareInfo * result)
     tx(AT GMR);
-    if (rx("AT version:",   & result->atVersion)   == ok &&
-        rx("SDK version:",  & result->atVersion)   == ok &&
-        rx("compile time:", & result->compileTime) == ok &&
-        rx("Bin version:",  & result->binVersion)  == ok
+    if (rx("AT version:",   & result->atVersion)   == success &&
+        rx("SDK version:",  & result->sdkVersion)  == success &&
+        rx("compile time:", & result->compileTime) == success &&
+        rx("Bin version:",  & result->binVersion)  == success
     );
 $
 
@@ -264,7 +253,7 @@ bool atEcho(bool enable){
 
 class AtUartConfig {
 public:
-    int32_t   rate;
+    int32_t  rate;
     uint8_t  databits;
     uint8_t  stopbits;
     uint8_t  parity;
@@ -345,6 +334,14 @@ $
 #define CWQAP        "+CWQAP"
 #define CWSAP        "+CWSAP"
 #define CWLIF        "+CWLIF"
+#define CWDHCP       "+CWDHCP"
+#define CWDHCPS      "+CWDHCPS"
+#define CWAUTOCONN   "+CWAUTOCONN"
+#define CWSTARTSMAR  "+CWSTARTSMAR"
+#define CWSTOPSMART  "+CWSTOPSMART"
+#define WPS          "+WPS"
+#define CWHOSTNAME   "+CWHOSTNAME"
+#define MDNS         "+MDNS"
 
 CMD(atWifiMode, int32_t mode)
     tx(AT CWMODE SET, mode);
@@ -364,9 +361,9 @@ public:
 };
 
 CMD(atWifiConnect, 
-    const char * ssid, 
-    const char * pwd, 
-    const char * bssid = "")
+    String ssid, 
+    String pwd, 
+    String bssid = "")
     if (bssid == ""){
         tx(AT CWJAP SET, ssid, pwd);
     }
@@ -422,9 +419,7 @@ CMD(atWifiScan, callback && call)
         info.ecn = ecn;
         info.ssid = strchr(line, ',') + 2; //skip ',' '\"'
         info.rssi = rssi;
-        for (size_t i = 0; i < 6; i++) {
-            info.mac[i] = (uint8_t)mac[i];
-        }
+        copy(info.mac, mac, 6);
         info.channel = channel;
         call(info);
         current = readLine();
@@ -496,12 +491,99 @@ CMD(atWifiUserList, callback && call)
         mac + 0, ':', mac + 1, ':', mac + 2, ':', mac + 3, ':', mac + 4, ':', mac + 5
     ) == success){
         WifiUserList user;
-        for (size_t i = 0; i < 4; i++){
-            user.ip[i] = ip[i];
-        }
-        for (size_t i = 0; i < 6; i++){
-            user.mac[i] = (uint8_t)mac[i];
-        }
+        copy(user.ip, ip, 4);
+        copy(user.mac, mac, 6);
         call(user);
     }
+$
+
+CMD(atDhcp, bool enable, int32_t mask)
+    tx(AT CWDHCP SET, enable, mask);
+$
+
+CMD(atDhcp, int32_t * result)
+    tx(AT CWDHCP ASK);
+    rx(CWDHCP TOKEN, result);
+$
+
+CMD(atDhcpIpRangeClear)
+    tx(AT CWDHCPS SET, disable);
+$
+
+class IpRange{
+public:
+    int32_t leaseMinute;
+    uint8_t startIp[4];
+    uint8_t endIp[4];
+};
+
+CMD(atDhcpIpRange, IpRange const & configure)
+    //xxx.xxx.xxx.xxx -> 12 + 1 bytes
+    char startIp[12 + 1];
+    char endIp[12 + 1];
+    sprintf(startIp, "%d.%d.%d.%d", 
+        configure.startIp[0], 
+        configure.startIp[1], 
+        configure.startIp[2], 
+        configure.startIp[3]
+    );
+    sprintf(endIp, "%d.%d.%d.%d", 
+        configure.endIp[0], 
+        configure.endIp[1], 
+        configure.endIp[2], 
+        configure.endIp[3]
+    );
+    tx(AT CWDHCPS SET, enable, configure.leaseMinute, startIp, endIp);
+$
+
+CMD(atDhcpIpRange, IpRange * configure)
+    int32_t startIp[4];
+    int32_t endIp[4];
+    tx(AT CWDHCPS ASK);
+    if (rx(CWDHCPS TOKEN,
+        & configure->leaseMinute, 
+        & startIp[0], '.',
+        & startIp[1], '.',
+        & startIp[2], '.',
+        & startIp[3],
+        & endIp[0], '.',
+        & endIp[1], '.',
+        & endIp[2], '.',
+        & endIp[3]) == success){
+        copy(configure->startIp, startIp, 4);
+        copy(configure->endIp, endIp, 4);
+    }
+$
+
+CMD(atApAutoConnect, bool enable)
+    tx(AT CWAUTOCONN SET, enable);
+$
+
+CMD(atApStartSmart, int32_t type)
+    tx(AT CWSTARTSMAR SET, type);
+$
+
+CMD(atApStopSmart, int32_t type)
+    tx(AT CWSTOPSMART SET, type);
+$
+
+CMD(atWps, bool enable)
+    tx(AT WPS SET, enable);
+$
+
+CMD(atHostNameTemp, String const & name)
+    tx(AT CWHOSTNAME SET, name);
+$
+
+CMD(atHostNameTemp, String * name)
+    tx(AT CWHOSTNAME ASK);
+    rx(CWHOSTNAME TOKEN, name);
+$
+
+CMD(atMdnsDisable)
+    tx(AT MDNS SET, disable);
+$
+
+CMD(atMdns, String hostName, String serviceName, int32_t port)
+    tx(AT MDNS SET, enable, hostName, String("_") + serviceName, port);
 $
