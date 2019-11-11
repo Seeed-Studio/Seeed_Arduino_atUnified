@@ -1,24 +1,45 @@
 #include"UnifiedAtBase.h"
 
-#define RST             "+RST"
-#define GMR             "+GMR"
-#define GSLP            "+GSLP"
-#define SLEEP           "+SLEEP"
-#define UART_CUR        "+UART_CUR"
-#define UART_DEF        "+UART_DEF"
-#define SYSRAM          "+SYSRAM"
-#define SYSFLASH     
-#define FS           
+#define SET_RST         "AT+RST"
+#define GET_GMR         "+GMR:%s\n%+GMR:%s\n%+GMR:%s\n%+GMR:%s",    \
+                        & a0->atVersion,                            \
+                        & a0->sdkVersion,                           \
+                        & a0->compileTime,                          \
+                        & a0->binVersion
+#define ASK_GMR         "AT+GMR?"
+#define SET_GSLP        "AT+GSLP=%d", a0
+#define SET_SLEEP       "AT+SLEEP=%d", a0
+#define ASK_SLEEP       "AT+SLEEP?"
+#define GET_SLEEP       "+SLEEP:%d", a0
+
+#define UART_ARG(...)   (__VA_ARGS__ a0)->rate,                     \
+                        (__VA_ARGS__ a0)->databits,                 \
+                        (__VA_ARGS__ a0)->stopbits,                 \
+                        (__VA_ARGS__ a0)->parity,                   \
+                        (__VA_ARGS__ a0)->flowControl
+
+#define SET_UART_CUR    "AT+UART_CUR=%d,%d,%d,%d,%d", UART_ARG(&)
+#define ASK_UART_CUR    "AT+UART_CUR?"
+#define GET_UART_CUR    "+UART_CUR:%d,%d,%d,%d,%d",   UART_ARG()
+
+#define SET_UART_DEF    "AT+UART_DEF=%d,%d,%d,%d,%d", UART_ARG(&)
+#define ASK_UART_DEF    "AT+UART_DEF?"
+#define GET_UART_DEF    "+UART_DEF:%d,%d,%d,%d,%d",   UART_ARG()
+
+#define ASK_SYSRAM      "AT+SYSRAM?"
+#define GET_SYSRAM      "+SYSRAM:%d", a0
+
+#define SYSFLASH    
+#define FS          
 #define RFPOWER         "+RFPOWER"
 
 extern volatile bool needWaitWeekup;
-extern volatile bool idEndLine;
 extern bool atBegin();
 extern void waitReady();
 extern String readLine();
 
 CMD(atReset, actionMode mode)
-    tx(AT RST);
+    tx(SET_RST);
     if (mode == actionMode::waitReady){
         waitReady();
         return success;
@@ -26,66 +47,43 @@ CMD(atReset, actionMode mode)
     needWaitWeekup = true;
 $
 
-CMD(atFirmwareInfo, FirmwareInfo * result)
-    tx(AT GMR);
-    if (rx("AT version:",   & result->atVersion)   == success &&
-        rx("SDK version:",  & result->sdkVersion)  == success &&
-        rx("compile time:", & result->compileTime) == success &&
-        rx("Bin version:",  & result->binVersion)  == success
-    );
+CMD(atFirmwareInfo, FirmwareInfo * a0)
+    tx(ASK_GMR);
+    rx(GET_GMR);
 $
 
-CMD(atDeepSleep, int32_t ms)
+CMD(atDeepSleep, int32_t a0)
     needWaitWeekup = true;
-    tx(AT GSLP SET, ms);
-    return success;
+    tx(SET_GSLP);
+    return success; // no response, return directly
 $
 
-void uart(const char * header, AtUartConfig const & config){
-    tx(
-        header,
-        config.rate, 
-        config.databits, 
-        config.stopbits, 
-        config.parity, 
-        config.flowControl
-    );
-}
-void uart(const char * ask, const char * resp, AtUartConfig & config){
-    tx(ask);
-    rx(resp,
-        & config.rate, 
-        & config.databits, 
-        & config.stopbits, 
-        & config.parity, 
-        & config.flowControl
-    );
-}
-
-CMD(atUartTemp, AtUartConfig const & config)
-    uart(AT UART_CUR SET, config);
+CMD(atUartTemp, AtUartConfig const & a0)
+    tx(SET_UART_CUR);
 $
 
-CMD(atUartTemp, AtUartConfig * config)
-    uart(AT UART_CUR ASK, UART_CUR TOKEN, config[0]);
+CMD(atUartTemp, AtUartConfig * a0)
+    tx(ASK_UART_CUR);
+    tx(GET_UART_CUR);
 $
 
-CMD(atUartNovolatile, AtUartConfig const & config)
-    uart(AT UART_DEF SET, config);
+CMD(atUartNovolatile, AtUartConfig const & a0)
+    tx(SET_UART_DEF);
 $
 
-CMD(atUartNovolatile, AtUartConfig * config)
-    uart(AT UART_DEF ASK, UART_DEF TOKEN, config[0]);
+CMD(atUartNovolatile, AtUartConfig * a0)
+    tx(ASK_UART_DEF);
+    tx(GET_UART_DEF);
 $
 
-CMD(atSleepMode, bool enable)
-    tx(AT SLEEP SET, enable);
+CMD(atSleepMode, bool a0)
+    tx(SET_SLEEP);
 $
 
 CMD(atSleepMode, bool * result)
-    int32_t tmp;
-    tx(AT SLEEP ASK);
-    rx(AT SLEEP TOKEN, & tmp);
-    result[0] = tmp;
+    int32_t a0;
+    tx(SET_SLEEP);
+    rx(GET_SLEEP);
+    result[0] = a0;
 $
 
