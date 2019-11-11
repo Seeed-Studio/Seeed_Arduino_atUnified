@@ -1,5 +1,6 @@
 #include"UnifiedAtType.h"
-#define ATE             "ATE"
+#define ATE             "ATE%d", a0
+
 #ifdef USE_AT_SERIAL
     #define USE_SERIAL_COM
     auto & com = Serial;
@@ -12,7 +13,7 @@
 #endif
 
 volatile bool needWaitWeekup = false;
-volatile bool idEndLine = true;
+volatile bool isEndLine = true;
 
 #ifdef USE_SERIAL_COM
     bool available(){
@@ -26,6 +27,10 @@ volatile bool idEndLine = true;
         line = line.substring(0, line.length() - 1);
         //debug(line.c_str());
         return line;
+    }
+    void write(char value){
+        com.print(value);
+        debug("%c", value);
     }
     void write(const char * value){
         com.print(value);
@@ -67,92 +72,179 @@ bool isNotWakeup(){
     return true;
 }
 
-bool subrx(const char * prefix, any * list){
-    String  resp = readLine();
-    auto    str = (char *)resp.c_str();
-    auto    len = strlen(prefix);
+String readLine();
 
-    if (resp.indexOf(prefix) != 0){
-        return fail;
+int32_t parseInt(char ** p, char type){
+    typedef int(* match_t)(int);
+    auto end = p[0];
+    auto match = type == 'x' ? match_t(& isxdigit): match_t(& isdigit);
+    auto value = int32_t(0);
+    char fmt[] = { '%', type, '\0' };
+    if (end[0] == '-' || end[0] == '+'){
+        end++;
     }
-    str += len;
-    
-    while(str[0]){
-        if (str[0] == ','){
-            str += 1;
+    while(match(end[0])){
+        end += 1;
+    }
+    sscanf(p[0], fmt, & value);
+    p[0] = end;
+    return value;
+};
+
+//parse mac/ip
+//mac format
+//"12:34:56:78:9a:bc"
+//ip format
+//"192.168.1.1"
+void parseNetCode(any * list, char ** p, char type, size_t length){
+    p[0] += 1;
+    auto end = (char *)strchr(p[0], '\"');
+    for (size_t i = 0; i < length; i++){
+        list->set<uint8_t>(i, parseInt(p, type));
+        p[0] += 1; //skip ':' or '.'
+    }
+    p[0] = end + 1;
+};
+
+bool rxMain(const char * fmt, any * list){
+    char buf[32];
+    auto p = (char *)readLine().c_str();
+    //char line[] = "+AT:\"hello?\",12,-129,\"nico\",\"12:34:56:78:9a:bc\",\"192.168.1.1\"";
+    //char * p = line;
+
+    for(; fmt[0]; fmt++){
+        if (fmt[0] == '\n' && p[0] == '\0'){
+            fmt += 1;
+            p = (char *)readLine().c_str();
+        }
+        if (fmt[0] != '%'){
+            if (fmt[0] != p[0]){
+                return fail;
+            }
+            p += 1;
             continue;
         }
-        if (list->skip){
-            str += list->skip;
-            list += 1;
-        }
-        if (str[0] == '\"'){
-            str += 1;
-            auto len = strchr(str, '\"') - str;
-            str[len] = '\0';
-            list->set<String>(str);
-            str += len + 1;
-        }
-        else if(list->type == string){
-            list->set<String>(str);
-            break;
-        }
-        else{
-            auto end = str;
-            for (; isxdigit(end[0]); end++){
-                ;
+        
+        fmt += 1;
+
+        switch(fmt[0]){
+        case 's': {
+                auto end = (char *)strchr(p + 1, '\"');
+                end[0] = '\0';
+                list->set<String>(String(p + 1));
+                p = end + 1;
+                break;
             }
-            sscanf(str, list->type == hex ? "%x" : "%d", list->v);
-            str = end;
+        case 'd':{
+                list->set<int32_t>(parseInt(& p, 'd'));
+                break;   
+            }
+        case 'x':{
+                list->set<int32_t>(parseInt(& p, 'x'));
+                break;
+            }
+        case 'm': {
+                parseNetCode(list, & p, 'x', 6);
+                break;
+            }
+        case 'i':{
+                parseNetCode(list, & p, 'd', 4);
+                break;
+            }
+        case '%':{
+                if (p[0] != '%'){
+                    return false;
+                }
+                p += 1;
+                continue;
+            }
         }
 
-        //DON't do this: for(;; list += 1)
+        // DON'T DO THIS 
+        // for(;; list += 1)
         list += 1;
     }
     return success;
 }
 
-void write(int32_t value){
-    char buf[sizeof(int32_t) * 8];
-    sprintf(buf, "%d", value);
-    write(buf);
+
+#define WRITE_NUM(fmt)          \
+auto v = list->get<int32_t>();  \
+if (mayHidden){                 \
+    if (v == leaveOut){         \
+        continue;               \
+    }                           \
+}                               \
+sprintf(buf, fmt, v);           \
+write(buf);                     \
+break;
+
+void txMain(const char * fmt, any * list){
+    char buf[32];
+    
+    for(; fmt[0]; fmt++){
+        if (fmt[0] != '%'){
+            write(fmt[0]);
+            continue;
+        }
+        
+        bool mayHidden = fmt[1] == '+';
+        fmt += mayHidden ? 2 : 1;
+
+        switch(fmt[0]){
+        case 's': {
+                if (list->get<String>() == nullptr){
+                    continue;
+                }
+                write('\"');
+                write(list->get<String>().c_str());
+                write('\"');
+                break;
+            }
+        case 'd':{
+                WRITE_NUM("%d");
+            }
+        case 'x':{
+                WRITE_NUM("%x");
+            }
+        case 'm': {
+                if (list->ptr<uint8_t>() == nullptr){
+                    continue;
+                }
+                auto mac = list->ptr<uint8_t>();
+                sprintf(buf, "\"%.2x:%.2x:%.2x:%.2x:%.2x:%.2x\"",
+                    mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]
+                );
+                write(buf);
+                break;
+            }
+        case 'i':{
+                if (list->ptr<uint8_t>() == nullptr){
+                    continue;
+                }
+                auto ip = list->ptr<uint8_t>();
+                sprintf(buf, "\"%d.%d.%d.%d\"",
+                    ip[0], ip[1], ip[2], ip[3]
+                );
+                write(buf);
+                break;
+            }
+        case '%':{
+                write('%');
+                continue;
+            }
+        }
+
+        // DON'T DO THIS 
+        // for(;; list += 1)
+        list += 1;
+    }
+    write(END_LINE);
 }
 
-void write(String const & value){
-    write("\"");
-    write(value.c_str());
-    write("\"");
-}
-
-void write(ip_t * ip){
-    write(ip[0]); write(".");
-    write(ip[1]); write(".");
-    write(ip[2]); write(".");
-    write(ip[3]);
-}
-
-void write(mac_t one){
-    const char * map = "0123456789abcdef";
-    char buf[] = { 
-        map[one & 0xf], 
-        map[one >> 0xf], '\0' };
-    write(buf);
-}
-
-void write(mac_t * mac){
-    write(mac[0]); write(":");
-    write(mac[1]); write(":");
-    write(mac[2]); write(":");
-    write(mac[3]); write(":");
-    write(mac[4]); write(":");
-    write(mac[5]); write(":");
-    write(mac[6]); write(":");
-    write(mac[7]);
-}
-
-void tx(){
-    write("\r\n");
-    idEndLine = true;
+void tx(const char * cmd){
+    write(cmd);
+    write(END_LINE);
 }
 
 CMD(atTest)
@@ -161,12 +253,11 @@ $
 
 //DON'T USE -> CMD(atEcho, bool enable)
 //BUT -> bool atEcho(bool enable)
-bool atEcho(bool enable){
-    extern bool isNotWakeup();
+bool atEcho(bool a0){
     //echo will be enable when reset
     //THIS CMD NEED NOT 'SET' SUFIX
     //AND DON'T USE CMD(atEcho, bool enable) FORMAT, IT WILL RESULT RECURRENCE.
     if (isNotWakeup()) return fail;
-    tx(enable ? ATE "1" : ATE "0"); 
+    tx(ATE); 
     return waitFlag();
 }
