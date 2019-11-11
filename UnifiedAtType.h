@@ -21,12 +21,6 @@ inline bool name(__VA_ARGS__) {             \
 #define $                return waitFlag(); }
 #define debug(...)       Serial.printf(__VA_ARGS__);
 
-constexpr bool disable     = false;
-constexpr bool enable      = true;
-constexpr bool fail        = false;
-constexpr bool success     = true;
-constexpr int32_t leaveOut = int32_t(0x80000000);
-
 bool atTest();
 bool atBegin();
 
@@ -71,8 +65,37 @@ private:
     void * data;
 };
 
+template<uint32_t length>
+struct NetCode{
+    uint8_t & operator [](size_t index){
+        return code[index];
+    }
+    uint8_t * operator &(){
+        return code;
+    }
+private:
+    uint8_t code[length];
+};
+
+struct nullref_t{
+    template<class type>
+    operator type &() const{
+        return *(type *)nullptr;
+    }
+};
+
+constexpr bool disable      = false;
+constexpr bool enable       = true;
+constexpr bool fail         = false;
+constexpr bool success      = true;
+constexpr int32_t leaveOut  = int32_t(0x80000000);
+constexpr nullref_t nullref = {};
+
+typedef NetCode<4> ipv4;
+typedef NetCode<6> mac;
+
 template<class ... arg>
-bool rx(const char * fmt, arg ... list){
+bool rx(const char * fmt, arg & ... list){
     bool rxMain(const char * fmt, any * list);
     any   ls[] = { list... };
     any * v = ls;
