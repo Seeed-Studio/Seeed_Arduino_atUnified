@@ -16,13 +16,13 @@ class WifiToken{
 public:
     String ssid;
     String pwd;
-    String bssid;
+    mac    bssid;
 };
 
 class WifiLinkedAp{
 public:
     String  ssid;
-    String  bssid;
+    mac     bssid;
     int32_t channel;
     int32_t rssi;
 };
@@ -32,7 +32,7 @@ public:
     int8_t  ecn;
     String  ssid;
     int8_t  rssi;
-    uint8_t mac[6];
+    mac     bssid;
     uint8_t channel;
 };
 
@@ -52,15 +52,15 @@ public:
 
 class WifiUserList{
 public:
-    uint8_t ip[4];
-    uint8_t mac[6];
+    ipv4    ip;
+    mac     bssid;
 };
 
 class IpRange{
 public:
     int32_t leaseMinute;
-    uint8_t startIp[4];
-    uint8_t endIp[4];
+    ipv4    startIp;
+    ipv4    endIp;
 };
 
 bool atWifiMode(int32_t mode);
