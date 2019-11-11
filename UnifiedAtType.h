@@ -16,85 +16,24 @@
 #define CMD(name,...)                       \
 inline bool name(__VA_ARGS__) {             \
     extern bool atEcho(bool);               \
-    extern bool isNotWakeup();              \
     extern bool waitFlag();                 \
-    if (isNotWakeup()) return fail;         \
     if (atEcho(false) == fail) return fail;
 #define $                return waitFlag(); }
 #define debug(...)       Serial.printf(__VA_ARGS__);
 
-constexpr bool disable = false;
-constexpr bool enable  = true;
-constexpr bool fail    = false;
-constexpr bool success = true;
+constexpr bool disable     = false;
+constexpr bool enable      = true;
+constexpr bool fail        = false;
+constexpr bool success     = true;
+constexpr int32_t leaveOut = int32_t(0x80000000);
 
 bool atTest();
 bool atBegin();
-
-enum any_type{
-    none,
-    digital,
-    hex,
-    string,
-    ip,
-};
 
 enum class actionMode{
     waitReady,
     async,
 };
-
-enum hex_t : int32_t {};
-enum mac_t : uint8_t {};
-enum ip_t : uint8_t {};
-
-enum class txMore{ };
-constexpr txMore more = txMore(0);
-
-struct any{
-    any(ip_t * v)    : v(v), type(ip),      skip(0){}
-    any(hex_t * v)   : v(v), type(hex),     skip(0){}
-    any(int32_t * v) : v(v), type(digital), skip(0){}
-    any(String * v)  : v(v), type(string),  skip(0){}
-    any(const char * v) :    type(none),    skip(strlen(v)){}
-    any(char v) :            type(none),    skip(1){}
-    template<class type> 
-    void set(type const & value){
-        *(type *)v = value;
-    }
-    void *   v;
-    uint8_t  skip;
-    any_type type;
-};
-
-template<class ... arg>
-bool rx(const char * prefix, arg ... list){
-    extern bool subrx(const char * prefix, any * list);
-    any     ls[] = { list... };
-    return subrx(prefix, ls);
-}
-
-inline void tx(txMore){}
-void tx();
-
-template<class first, class ... arg>
-void tx(first a, arg ... list){
-    extern void write(int32_t value);
-    extern void write(String const & value);
-    extern void write(ip_t * ip);
-    extern void write(mac_t one);
-    extern void write(mac_t * mac);
-    extern volatile bool idEndLine;
-
-    write(a);
-    if (idEndLine){
-        idEndLine = false;
-    }
-    else if (sizeof...(list)){
-        write(",");
-    }
-    tx(list...);
-}
 
 template<class a, class b>
 void copy(a * des, b const * src, size_t length){
@@ -102,4 +41,51 @@ void copy(a * des, b const * src, size_t length){
         des[length] = (a)src[length];
     }
 }
+
+struct any{
+    template<class type>
+    any(const type * v) : data((type *)v){}
+
+    template<class type>
+    any(type const & v) : data((type *) & v){}
+
+    template<class type>
+    void set(type const & value){
+        *(type *)data = value;
+    }
+    template<class type>
+    void set(size_t i, type const & value){
+        ((type *)data)[i] = value;
+    }
+
+    template<class type>
+    type get(){
+        return *(type *)data;
+    }
+
+    template<class type>
+    type * ptr(){
+        return (type *)data;
+    }
+private:
+    void * data;
+};
+
+template<class ... arg>
+bool rx(const char * fmt, arg ... list){
+    bool rxMain(const char * fmt, any * list);
+    any   ls[] = { list... };
+    any * v = ls;
+    return rxMain(fmt, v);
+}
+
+template<class ... arg>
+void tx(const char * fmt, arg ... list){
+    void txMain(const char * fmt, any * list);
+    any     ls[] = { list... };
+    any   * v = ls;
+    txMain(fmt, v);
+}
+
+void tx(const char * cmd);
 
