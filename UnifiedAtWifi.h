@@ -11,7 +11,21 @@
 #else
     #include<functional>
 #endif
-extern String readLine();
+
+class WifiToken{
+public:
+    String ssid;
+    String pwd;
+    String bssid;
+};
+
+class WifiLinkedAp{
+public:
+    String  ssid;
+    String  bssid;
+    int32_t channel;
+    int32_t rssi;
+};
 
 class WifiLinkInfo{
 public:
@@ -31,8 +45,8 @@ public:
     int32_t maxConnect;
     int32_t isSsidHidden;
     WifiApConfigure() : 
-        maxConnect(-1),
-        isSsidHidden(-1){
+        maxConnect(leaveOut),
+        isSsidHidden(leaveOut){
     }
 };
 
@@ -51,11 +65,12 @@ public:
 
 bool atWifiMode(int32_t mode);
 bool atWifiMode(int32_t * mode);
-bool atWifiConnect(String ssid, String pwd, String bssid = "");
+bool atWifiConnect(WifiToken const & token);
+bool atWifiConnect(WifiLinkedAp * ap);
 bool atWifiScan(std::function<void (WifiLinkInfo &)> && call);
 bool atWifiDisconnect();
-bool atWifiApConfigure(WifiApConfigure * configure);
 bool atWifiApConfigure(WifiApConfigure const & configure);
+bool atWifiApConfigure(WifiApConfigure * configure);
 bool atWifiUserList(std::function<void (WifiUserList &)> && call);
 bool atDhcp(bool enable, int32_t mask);
 bool atDhcp(int32_t * result);
@@ -64,7 +79,7 @@ bool atDhcpIpRange(IpRange const & configure);
 bool atDhcpIpRange(IpRange * configure);
 bool atApAutoConnect(bool enable);
 bool atApStartSmart(int32_t type);
-bool atApStopSmart(int32_t type);
+bool atApStopSmart();
 bool atWps(bool enable);
 bool atHostNameTemp(String const & name);
 bool atHostNameTemp(String * name);
