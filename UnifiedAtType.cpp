@@ -1,5 +1,5 @@
 #include"UnifiedAtType.h"
-#define ATE             "ATE%d", a0
+#define ATE             "ATE%d", enable
 
 #ifdef USE_AT_SERIAL
     #define USE_SERIAL_COM
@@ -93,17 +93,17 @@ int32_t parseInt(char ** p, char type){
 
 //parse mac/ip
 //mac format
-//"12:34:56:78:9a:bc"
+//12:34:56:78:9a:bc
 //ip format
-//"192.168.1.1"
+//192.168.1.1
 void parseNetCode(any * list, char ** p, char type, size_t length){
-    p[0] += 1;
-    auto end = (char *)strchr(p[0], '\"');
     for (size_t i = 0; i < length; i++){
         list->set<uint8_t>(i, parseInt(p, type));
         p[0] += 1; //skip ':' or '.'
     }
-    p[0] = end + 1;
+    if (p[0] == ','){
+        p[0] += 1;
+    }
 };
 
 bool rxMain(const char * fmt, any * list){
@@ -253,7 +253,7 @@ $
 
 //DON'T USE -> CMD(atEcho, bool enable)
 //BUT -> bool atEcho(bool enable)
-bool atEcho(bool a0){
+bool atEcho(bool enable){
     //echo will be enable when reset
     //THIS CMD NEED NOT 'SET' SUFIX
     //AND DON'T USE CMD(atEcho, bool enable) FORMAT, IT WILL RESULT RECURRENCE.
