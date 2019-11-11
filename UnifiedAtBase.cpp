@@ -2,21 +2,21 @@
 
 #define SET_RST         "AT+RST"
 #define GET_GMR         "+GMR:%s\n%+GMR:%s\n%+GMR:%s\n%+GMR:%s",    \
-                        & a0->atVersion,                            \
-                        & a0->sdkVersion,                           \
-                        & a0->compileTime,                          \
-                        & a0->binVersion
+                        & info->atVersion,                          \
+                        & info->sdkVersion,                         \
+                        & info->compileTime,                        \
+                        & info->binVersion
 #define ASK_GMR         "AT+GMR?"
-#define SET_GSLP        "AT+GSLP=%d", a0
-#define SET_SLEEP       "AT+SLEEP=%d", a0
+#define SET_GSLP        "AT+GSLP=%d", ms
+#define SET_SLEEP       "AT+SLEEP=%d", mode
 #define ASK_SLEEP       "AT+SLEEP?"
-#define GET_SLEEP       "+SLEEP:%d", a0
+#define GET_SLEEP       "+SLEEP:%d", & mode
 
-#define UART_ARG(...)   (__VA_ARGS__ a0)->rate,                     \
-                        (__VA_ARGS__ a0)->databits,                 \
-                        (__VA_ARGS__ a0)->stopbits,                 \
-                        (__VA_ARGS__ a0)->parity,                   \
-                        (__VA_ARGS__ a0)->flowControl
+#define UART_ARG(...)   (__VA_ARGS__ config)->rate,                 \
+                        (__VA_ARGS__ config)->databits,             \
+                        (__VA_ARGS__ config)->stopbits,             \
+                        (__VA_ARGS__ config)->parity,               \
+                        (__VA_ARGS__ config)->flowControl
 
 #define SET_UART_CUR    "AT+UART_CUR=%d,%d,%d,%d,%d", UART_ARG(&)
 #define ASK_UART_CUR    "AT+UART_CUR?"
@@ -47,43 +47,43 @@ CMD(atReset, actionMode mode)
     needWaitWeekup = true;
 $
 
-CMD(atFirmwareInfo, FirmwareInfo * a0)
+CMD(atFirmwareInfo, FirmwareInfo * info)
     tx(ASK_GMR);
     rx(GET_GMR);
 $
 
-CMD(atDeepSleep, int32_t a0)
+CMD(atDeepSleep, int32_t ms)
     needWaitWeekup = true;
     tx(SET_GSLP);
     return success; // no response, return directly
 $
 
-CMD(atUartTemp, AtUartConfig const & a0)
+CMD(atUartTemp, AtUartConfig const & config)
     tx(SET_UART_CUR);
 $
 
-CMD(atUartTemp, AtUartConfig * a0)
+CMD(atUartTemp, AtUartConfig * config)
     tx(ASK_UART_CUR);
     tx(GET_UART_CUR);
 $
 
-CMD(atUartNovolatile, AtUartConfig const & a0)
+CMD(atUartNovolatile, AtUartConfig const & config)
     tx(SET_UART_DEF);
 $
 
-CMD(atUartNovolatile, AtUartConfig * a0)
+CMD(atUartNovolatile, AtUartConfig * config)
     tx(ASK_UART_DEF);
     tx(GET_UART_DEF);
 $
 
-CMD(atSleepMode, bool a0)
+CMD(atSleepMode, bool mode)
     tx(SET_SLEEP);
 $
 
 CMD(atSleepMode, bool * result)
-    int32_t a0;
+    int32_t mode;
     tx(SET_SLEEP);
     rx(GET_SLEEP);
-    result[0] = a0;
+    result[0] = mode;
 $
 
