@@ -1,71 +1,72 @@
 #include"UnifiedAtWifi.h"
 
-#define SET_CWMODE              "AT+CWMODE=%d", a0
+#define SET_CWMODE              "AT+CWMODE=%d", mode
 #define ASK_CWMODE              "AT+CWMODE?"
-#define GET_CWMODE              "+CWMODE:%d", a0
+#define GET_CWMODE              "+CWMODE:%d", mode
 
-#define SET_CWJAP               "AT+CWJAP=%s,%s%+s", a0.ssid, a0.pwd, a0.bssid
+#define SET_CWJAP               "AT+CWJAP=%s,%s%+m", ssid, pwd, bssid
 #define ASK_CWJAP               "AT+CWJAP?"
-#define GET_CWJAP               "+CWJAP:%s,%s,%d,%d", a0->ssid, a0->bssid, a0->channel, a0->rssi
+#define GET_CWJAP               "+CWJAP:%s,%s,%d,%d", token->ssid, token->bssid, token->channel, token->rssi
 
 #define ASK_CWLAP               "AT+CWLAP?"
 #define GET_CWLAP               "+CWLAP:"
 
 #define SET_CWQAP               "AT+CWQAP"
 
-#define CWSAP_ARG(...)                  \
-        (__VA_ARGS__ a0)->ssid,         \
-        (__VA_ARGS__ a0)->pwd,          \
-        (__VA_ARGS__ a0)->channel,      \
-        (__VA_ARGS__ a0)->ecn,          \
-        (__VA_ARGS__ a0)->maxConnect,   \
-        (__VA_ARGS__ a0)->isSsidHidden
+#define CWSAP_ARG(...)                          \
+        (__VA_ARGS__ configure)->ssid,          \
+        (__VA_ARGS__ configure)->pwd,           \
+        (__VA_ARGS__ configure)->channel,       \
+        (__VA_ARGS__ configure)->ecn,           \
+        (__VA_ARGS__ configure)->maxConnect,    \
+        (__VA_ARGS__ configure)->isSsidHidden
 #define SET_CWSAP               "AT+CWSAP=%s,%s,%d,%d%+d%+d", CWSAP_ARG(&)
 #define ASK_CWSAP               "AT+CWSAP?"
 #define GET_CWSAP               "+CWSAP:%s,%s,%d,%d,%d,%d", CWSAP_ARG()
 
 #define ASK_CWLIF               "AT+CWLIF?"
-#define GET_CWLIF               "+CWLIF:%i,%m", a0.ip, a0.mac
+#define GET_CWLIF               "+CWLIF:%i,%m", item.ip, item.bssid
 
-#define SET_CWDHCP              "AT+CWDHCP=%d,%d", a0, a1
+#define SET_CWDHCP              "AT+CWDHCP=%d,%d", enable, mask
 #define ASK_CWDHCP              "AT+CWDHCP?"
-#define GET_CWDHCP              "+CWDHCP:%d", a0
+#define GET_CWDHCP              "+CWDHCP:%d", mask
 
-#define CWDHCPS_ARG(...)                \
-        (__VA_ARGS__ a0)->leaseMinute,  \
-        (__VA_ARGS__ a0)->startIp,      \
-        (__VA_ARGS__ a0)->endIp
+#define CWDHCPS_ARG(...)                        \
+        (__VA_ARGS__ configure)->leaseMinute,   \
+        (__VA_ARGS__ configure)->startIp,       \
+        (__VA_ARGS__ configure)->endIp
 
 #define SET_CWDHCPS_DISABLE     "AT+CWDHCPS=0"
 #define SET_CWDHCPS             "AT+CWDHCPS:1,%d,%i,%i", CWDHCPS_ARG(&)
 #define ASK_CWDHCPS             "AT+CWDHCPS?"
 #define GET_CWDHCPS             "+CWDHCPS:%d,%i,%i", CWDHCPS_ARG()
 
-#define SET_CWAUTOCONN          "AT+CWAUTOCONN=%d", a0
-#define SET_CWSTARTSMART        "AT+CWSTARTSMART=%d", a0
+#define SET_CWAUTOCONN          "AT+CWAUTOCONN=%d", enable
+#define SET_CWSTARTSMART        "AT+CWSTARTSMART=%d", type
 #define SET_CWSTOPSMART         "AT+CWSTOPSMART"
-#define SET_WPS                 "AT+WPS=%d", a0
-#define SET_CWHOSTNAME          "AT+CWHOSTNAME=%s", a0
+#define SET_WPS                 "AT+WPS=%d", enable
+#define SET_CWHOSTNAME          "AT+CWHOSTNAME=%s", name
 #define ASK_CWHOSTNAME          "AT+CWHOSTNAME?"
-#define GET_CWHOSTNAME          "+CWHOSTNAME:%s", a0
+#define GET_CWHOSTNAME          "+CWHOSTNAME:%s", name
 #define SET_MDNS_DISABLE        "AT+MDNS=0"
-#define SET_MDNS                "AT+MDNS=1,%s,%s,%d", a0, String("_") + a1, a2
+#define SET_MDNS                "AT+MDNS=1,%s,%s,%d", hostName, String("_") + serviceName, port
 
 extern String readLine();
 
-CMD(atWifiMode, int32_t a0)
+//
+CMD(atWifiMode, int32_t mode)
     tx(SET_CWMODE);
 $
-CMD(atWifiMode, int32_t * a0)
+CMD(atWifiMode, int32_t * mode)
     tx(ASK_CWMODE);
     rx(GET_CWMODE);
 $
 
-CMD(atWifiConnect, WifiToken const & a0)
+CMD(atWifiConnect, String const & ssid, String const & pwd, mac const & bssid)
     tx(SET_CWJAP);
 $
 
-CMD(atWifiConnect, WifiLinkedAp * a0)
+CMD(atWifiConnect, WifiLinkedAp * token)
     tx(ASK_CWJAP);
     tx(GET_CWJAP);
 $
@@ -120,7 +121,7 @@ CMD(atWifiScan, std::function<void (WifiLinkInfo &)> && call)
         info.ecn = ecn;
         info.ssid = strchr(line, ',') + 2; //skip ',' '\"'
         info.rssi = rssi;
-        copy(info.mac, mac, 6);
+        copy<uint8_t, int32_t>(info.bssid, mac, 6);
         info.channel = channel;
         call(info);
         current = readLine();
@@ -131,27 +132,27 @@ CMD(atWifiDisconnect)
     tx(SET_CWQAP);
 $
 
-CMD(atWifiApConfigure, WifiApConfigure const & a0)
+CMD(atWifiApConfigure, WifiApConfigure const & configure)
     tx(SET_CWSAP);
 $
 
-CMD(atWifiApConfigure, WifiApConfigure * a0)
+CMD(atWifiApConfigure, WifiApConfigure * configure)
     tx(ASK_CWSAP);
     rx(GET_CWSAP);
 $
 
 CMD(atWifiUserList, std::function<void (WifiUserList &)> && call)
-    WifiUserList a0;
+    WifiUserList item;
     for (tx(ASK_CWLIF); rx(GET_CWLIF) == success; ){
-        call(a0);
+        call(item);
     }
 $
 
-CMD(atDhcp, bool a0, int32_t a1)
+CMD(atDhcp, bool enable, int32_t mask)
     tx(SET_CWDHCP);
 $
 
-CMD(atDhcp, int32_t * a0)
+CMD(atDhcp, int32_t * mask)
     tx(ASK_CWDHCP);
     rx(GET_CWDHCP);
 $
@@ -160,20 +161,20 @@ CMD(atDhcpIpRangeClear)
     tx(SET_CWDHCPS_DISABLE);
 $
 
-CMD(atDhcpIpRange, IpRange const & a0)
+CMD(atDhcpIpRange, IpRange const & configure)
     tx(SET_CWDHCPS);
 $
 
-CMD(atDhcpIpRange, IpRange * a0)
+CMD(atDhcpIpRange, IpRange * configure)
     tx(ASK_CWDHCPS);
     rx(GET_CWDHCPS);
 $
 
-CMD(atApAutoConnect, bool a0)
+CMD(atApAutoConnect, bool enable)
     tx(SET_CWAUTOCONN);
 $
 
-CMD(atApStartSmart, int32_t a0)
+CMD(atApStartSmart, int32_t type)
     tx(SET_CWSTARTSMART);
 $
 
@@ -181,15 +182,15 @@ CMD(atApStopSmart)
     tx(SET_CWSTOPSMART);
 $
 
-CMD(atWps, bool a0)
+CMD(atWps, bool enable)
     tx(SET_WPS);
 $
 
-CMD(atHostNameTemp, String const & a0)
+CMD(atHostNameTemp, String const & name)
     tx(SET_CWHOSTNAME);
 $
 
-CMD(atHostNameTemp, String * a0)
+CMD(atHostNameTemp, String * name)
     tx(ASK_CWHOSTNAME);
     rx(GET_CWHOSTNAME);
 $
@@ -198,6 +199,6 @@ CMD(atMdnsDisable)
     tx(SET_MDNS_DISABLE);
 $
 
-CMD(atMdns, String a0, String a1, int32_t a2)
+CMD(atMdns, String hostName, String serviceName, int32_t port)
     tx(SET_MDNS);
 $
