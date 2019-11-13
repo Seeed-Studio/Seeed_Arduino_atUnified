@@ -12,13 +12,6 @@
     #include<functional>
 #endif
 
-class WifiToken{
-public:
-    String ssid;
-    String pwd;
-    mac    bssid;
-};
-
 class WifiLinkedAp{
 public:
     String  ssid;
@@ -65,7 +58,7 @@ public:
 
 bool atWifiMode(int32_t mode);
 bool atWifiMode(int32_t * mode);
-bool atWifiConnect(WifiToken const & token);
+bool atWifiConnect(String const & ssid, String const & pwd, mac const & bssid = nullref);
 bool atWifiConnect(WifiLinkedAp * ap);
 bool atWifiScan(std::function<void (WifiLinkInfo &)> && call);
 bool atWifiDisconnect();
