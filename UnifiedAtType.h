@@ -1,6 +1,11 @@
 #pragma once
-#include<Arduino.h>
-#include<WString.h>
+#ifndef ARDUINO
+    #include<string>
+    typedef std::string String;
+#else
+    #include<Arduino.h>
+    #include<WString.h>
+#endif
 #include<stdio.h>
 #include<string.h>
 #include<stdint.h>
@@ -10,6 +15,7 @@
 #define TOKEN           ":"
 #define AT_ERROR        "ERROR"
 #define AT_OK           "OK"
+#define AT_FAIL         "FAIL"
 #define AT_READY        "ready"
 #define SET             "="
 #define ASK             "?"
@@ -41,7 +47,7 @@ struct any{
     any(const type * v) : data((type *)v){}
 
     template<class type>
-    any(type const & v) : data((type *) & v){}
+    any(type const & v) : data(& (type &)v){}
 
     template<class type>
     void set(type const & value){
@@ -67,10 +73,10 @@ private:
 
 template<uint32_t length>
 struct NetCode{
-    uint8_t & operator [](size_t index){
-        return code[index];
-    }
     uint8_t * operator &(){
+        return code;
+    }
+    operator uint8_t * (){
         return code;
     }
 private:
@@ -82,6 +88,26 @@ struct nullref_t{
     operator type &() const{
         return *(type *)nullptr;
     }
+};
+
+enum DayOfWeek{
+    Sun, Mon, Tue, Wen, Thu, Fri, Sat,
+};
+
+enum Month{
+    Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec,
+};
+
+class DateTime{
+public:
+    //USE THE 32BIT int32_t FOR sscanf
+    int32_t year;
+    int32_t month;
+    int32_t day;
+    int32_t hour;
+    int32_t minute;
+    int32_t second;
+    int32_t dayOfWeek;
 };
 
 constexpr bool disable      = false;
@@ -98,17 +124,16 @@ template<class ... arg>
 bool rx(const char * fmt, arg & ... list){
     bool rxMain(const char * fmt, any * list);
     any   ls[] = { list... };
-    any * v = ls;
-    return rxMain(fmt, v);
+    return rxMain(fmt, ls);
 }
 
 template<class ... arg>
-void tx(const char * fmt, arg ... list){
+bool tx(const char * fmt, arg ... list){
     void txMain(const char * fmt, any * list);
     any     ls[] = { list... };
-    any   * v = ls;
-    txMain(fmt, v);
+    txMain(fmt, ls);
+    return true;
 }
 
-void tx(const char * cmd);
+bool tx(const char * cmd);
 
