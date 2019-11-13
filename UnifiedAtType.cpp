@@ -47,10 +47,10 @@ bool waitFlag(){
     while(true){
         String ack = readLine();
         //debug("E:%s\n", ack.c_str());
-        if (ack == AT_OK){
+        if (ack.indexOf(AT_OK) >= 0){
             return success;
         }
-        if (ack == AT_ERROR){
+        if (ack.indexOf(AT_ERROR) >= 0 || ack.indexOf(AT_FAIL) >= 0){
             return fail;
         }
     }
@@ -101,21 +101,66 @@ void parseNetCode(any * list, char ** p, char type, size_t length){
         list->set<uint8_t>(i, parseInt(p, type));
         p[0] += 1; //skip ':' or '.'
     }
-    if (p[0] == ','){
+    if (p[0][0] == ','){
         p[0] += 1;
     }
 };
 
+void parseDateTime(any * list, char ** p){
+    // Format:
+    // Mon Dec 12 02:33:32 2016
+    char * str = p[0];
+    auto * time = list->ptr<DateTime>();
+    time->dayOfWeek = Sun;
+    time->month = Jan;
+
+    (!strncmp(str, "Mon", 3) && (time->dayOfWeek = Mon)) ||
+    (!strncmp(str, "Tue", 3) && (time->dayOfWeek = Tue)) ||
+    (!strncmp(str, "Wen", 3) && (time->dayOfWeek = Wen)) ||
+    (!strncmp(str, "Thu", 3) && (time->dayOfWeek = Thu)) ||
+    (!strncmp(str, "Fri", 3) && (time->dayOfWeek = Fri)) ||
+    (!strncmp(str, "Sat", 3) && (time->dayOfWeek = Sat));
+
+    str += 4;
+
+    (!strncmp(str, "Jan", 3) && (time->month = Jan)) ||
+    (!strncmp(str, "Feb", 3) && (time->month = Feb)) ||
+    (!strncmp(str, "Mar", 3) && (time->month = Mar)) ||
+    (!strncmp(str, "Apr", 3) && (time->month = Apr)) ||
+    (!strncmp(str, "May", 3) && (time->month = May)) ||
+    (!strncmp(str, "Jun", 3) && (time->month = Jun)) ||
+    (!strncmp(str, "Jul", 3) && (time->month = Jul)) ||
+    (!strncmp(str, "Aug", 3) && (time->month = Aug)) ||
+    (!strncmp(str, "Sep", 3) && (time->month = Sep)) ||
+    (!strncmp(str, "Oct", 3) && (time->month = Oct)) ||
+    (!strncmp(str, "Nov", 3) && (time->month = Nov)) ||
+    (!strncmp(str, "Dec", 3) && (time->month = Dec));
+
+    str += 4;
+
+    time->day    = parseInt(& str, 'd'); str += 1; // skip ' '
+    time->hour   = parseInt(& str, 'd'); str += 1; // skip ':'
+    time->minute = parseInt(& str, 'd'); str += 1; // skip ':'
+    time->second = parseInt(& str, 'd'); str += 1; // skip ' '
+    time->year   = parseInt(& str, 'd');
+    p[0] = str;
+}
+
 bool rxMain(const char * fmt, any * list){
+    static char * p = (char *)"";
     char buf[32];
-    auto p = (char *)readLine().c_str();
     //char line[] = "+AT:\"hello?\",12,-129,\"nico\",\"12:34:56:78:9a:bc\",\"192.168.1.1\"";
     //char * p = line;
 
     for(; fmt[0]; fmt++){
-        if (fmt[0] == '\n' && p[0] == '\0'){
-            fmt += 1;
-            p = (char *)readLine().c_str();
+        if (p[0] == '\0'){
+            if (fmt[0] == '\n'){
+                fmt += 1;
+                p = (char *)readLine().c_str();
+            }
+            else{
+                return success;
+            }
         }
         if (fmt[0] != '%'){
             if (fmt[0] != p[0]){
@@ -139,6 +184,10 @@ bool rxMain(const char * fmt, any * list){
                 list->set<int32_t>(parseInt(& p, 'd'));
                 break;   
             }
+        case 'b':{
+                list->set<int8_t>(parseInt(& p, 'd'));
+                break;   
+            }
         case 'x':{
                 list->set<int32_t>(parseInt(& p, 'x'));
                 break;
@@ -149,6 +198,10 @@ bool rxMain(const char * fmt, any * list){
             }
         case 'i':{
                 parseNetCode(list, & p, 'd', 4);
+                break;
+            }
+        case 't':{
+                parseDateTime(list, & p);
                 break;
             }
         case '%':{
@@ -242,9 +295,10 @@ void txMain(const char * fmt, any * list){
     write(END_LINE);
 }
 
-void tx(const char * cmd){
+bool tx(const char * cmd){
     write(cmd);
     write(END_LINE);
+    return true;
 }
 
 CMD(atTest)
