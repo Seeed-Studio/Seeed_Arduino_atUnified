@@ -6,6 +6,19 @@
     #include<Arduino.h>
     #include<WString.h>
 #endif
+
+#ifdef max
+    #pragma push(max)
+    #pragma push(min)
+    #undef max
+    #undef min
+    #include<functional>
+    #pragma pop(min)
+    #pragma pop(max)
+#else
+    #include<functional>
+#endif
+
 #include<stdio.h>
 #include<string.h>
 #include<stdint.h>
@@ -79,6 +92,15 @@ struct NetCode{
     operator uint8_t * (){
         return code;
     }
+    bool isEmpty(){
+        for (size_t i = 0; i < length; i++){
+            if (code[i] != 0){
+                return false;
+            }
+        }
+        return true;
+    }
+    NetCode() : code { 0 }{}
 private:
     uint8_t code[length];
 };
@@ -91,11 +113,11 @@ struct nullref_t{
 };
 
 enum DayOfWeek{
-    Sun, Mon, Tue, Wen, Thu, Fri, Sat,
+    Sun, Mon, Tue, Wen, Thu, Fri, Sat, NotDayOfWeek
 };
 
 enum Month{
-    Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec,
+    Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec, NotMonth
 };
 
 class DateTime{
