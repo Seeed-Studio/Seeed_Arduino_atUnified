@@ -1,16 +1,5 @@
 #pragma once
 #include"UnifiedAtType.h"
-#ifdef max
-    #pragma push(max)
-    #pragma push(min)
-    #undef max
-    #undef min
-    #include<functional>
-    #pragma pop(min)
-    #pragma pop(max)
-#else
-    #include<functional>
-#endif
 
 class WifiLinkedAp{
 public:
