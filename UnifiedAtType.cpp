@@ -1,5 +1,6 @@
 #include"UnifiedAtType.h"
 #define ATE             "ATE%d", enable
+#define EOL             ((char *)"")
 
 #ifdef USE_AT_SERIAL
     #define USE_SERIAL_COM
@@ -74,11 +75,10 @@ bool isNotWakeup(){
 
 String readLine();
 
-int32_t parseInt(char ** p, char type){
+bool parseInt(char ** p, char type, int32_t * v){
     typedef int(* match_t)(int);
     auto end = p[0];
     auto match = type == 'x' ? match_t(& isxdigit): match_t(& isdigit);
-    auto value = int32_t(0);
     char fmt[] = { '%', type, '\0' };
     if (end[0] == '-' || end[0] == '+'){
         end++;
@@ -86,9 +86,11 @@ int32_t parseInt(char ** p, char type){
     while(match(end[0])){
         end += 1;
     }
-    sscanf(p[0], fmt, & value);
+    if (sscanf(p[0], fmt, v) == 0){
+        return fail;
+    }
     p[0] = end;
-    return value;
+    return success;
 };
 
 //parse mac/ip
@@ -96,59 +98,99 @@ int32_t parseInt(char ** p, char type){
 //12:34:56:78:9a:bc
 //ip format
 //192.168.1.1
-void parseNetCode(any * list, char ** p, char type, size_t length){
-    for (size_t i = 0; i < length; i++){
-        list->set<uint8_t>(i, parseInt(p, type));
-        p[0] += 1; //skip ':' or '.'
+bool parseNetCode(any * list, char ** p, char type, size_t length){
+
+    // NOTICE:
+    // some at response line use the "12:34:56:78:9a:bc" format, 
+    // but some use 12:34:56:78:9a:bc
+    // shit design!!!
+    if (p[0][0] == '\"'){
+        p[0] += 1;
     }
+    for (int32_t i = 0, v; i < length; i++){
+        if (parseInt(p, type, & v) == fail){
+            return fail;
+        }
+
+        list->set<uint8_t>(i, v);
+
+        if (p[0][0] != '\0'){
+            p[0] += 1;  //skip ':' or '.' or '\"'(the end) or 
+                        //','(when value without double quotes)
+        }
+    }
+
+    // when last character is '\"'
+    // p[0][0] maybe ',' or '\0'
     if (p[0][0] == ','){
         p[0] += 1;
     }
 };
 
-void parseDateTime(any * list, char ** p){
+bool parseDateTime(any * list, char ** p){
     // Format:
     // Mon Dec 12 02:33:32 2016
     char * str = p[0];
     auto * time = list->ptr<DateTime>();
-    time->dayOfWeek = Sun;
-    time->month = Jan;
+    auto dayOfWeek = 
+    !strncmp(str, "Sun", 3) ? Sun :
+    !strncmp(str, "Mon", 3) ? Mon :
+    !strncmp(str, "Tue", 3) ? Tue :
+    !strncmp(str, "Wen", 3) ? Wen :
+    !strncmp(str, "Thu", 3) ? Thu :
+    !strncmp(str, "Fri", 3) ? Fri :
+    !strncmp(str, "Sat", 3) ? Sat : NotDayOfWeek;
 
-    (!strncmp(str, "Mon", 3) && (time->dayOfWeek = Mon)) ||
-    (!strncmp(str, "Tue", 3) && (time->dayOfWeek = Tue)) ||
-    (!strncmp(str, "Wen", 3) && (time->dayOfWeek = Wen)) ||
-    (!strncmp(str, "Thu", 3) && (time->dayOfWeek = Thu)) ||
-    (!strncmp(str, "Fri", 3) && (time->dayOfWeek = Fri)) ||
-    (!strncmp(str, "Sat", 3) && (time->dayOfWeek = Sat));
-
-    str += 4;
-
-    (!strncmp(str, "Jan", 3) && (time->month = Jan)) ||
-    (!strncmp(str, "Feb", 3) && (time->month = Feb)) ||
-    (!strncmp(str, "Mar", 3) && (time->month = Mar)) ||
-    (!strncmp(str, "Apr", 3) && (time->month = Apr)) ||
-    (!strncmp(str, "May", 3) && (time->month = May)) ||
-    (!strncmp(str, "Jun", 3) && (time->month = Jun)) ||
-    (!strncmp(str, "Jul", 3) && (time->month = Jul)) ||
-    (!strncmp(str, "Aug", 3) && (time->month = Aug)) ||
-    (!strncmp(str, "Sep", 3) && (time->month = Sep)) ||
-    (!strncmp(str, "Oct", 3) && (time->month = Oct)) ||
-    (!strncmp(str, "Nov", 3) && (time->month = Nov)) ||
-    (!strncmp(str, "Dec", 3) && (time->month = Dec));
+    if (dayOfWeek == NotDayOfWeek){
+        return fail;
+    }
 
     str += 4;
 
-    time->day    = parseInt(& str, 'd'); str += 1; // skip ' '
-    time->hour   = parseInt(& str, 'd'); str += 1; // skip ':'
-    time->minute = parseInt(& str, 'd'); str += 1; // skip ':'
-    time->second = parseInt(& str, 'd'); str += 1; // skip ' '
-    time->year   = parseInt(& str, 'd');
+    auto month = 
+    !strncmp(str, "Jan", 3) ? Jan :
+    !strncmp(str, "Feb", 3) ? Feb :
+    !strncmp(str, "Mar", 3) ? Mar :
+    !strncmp(str, "Apr", 3) ? Apr :
+    !strncmp(str, "May", 3) ? May :
+    !strncmp(str, "Jun", 3) ? Jun :
+    !strncmp(str, "Jul", 3) ? Jul :
+    !strncmp(str, "Aug", 3) ? Aug :
+    !strncmp(str, "Sep", 3) ? Sep :
+    !strncmp(str, "Oct", 3) ? Oct :
+    !strncmp(str, "Nov", 3) ? Nov :
+    !strncmp(str, "Dec", 3) ? Dec : NotMonth;
+
+    if (month == NotMonth){
+        return fail;
+    }
+
+    str += 4;
+    time->dayOfWeek = dayOfWeek;
+    time->month     = month;
+    parseInt(& str, 'd', & time->day   ); str += 1; // skip ' '
+    parseInt(& str, 'd', & time->hour  ); str += 1; // skip ':'
+    parseInt(& str, 'd', & time->minute); str += 1; // skip ':'
+    parseInt(& str, 'd', & time->second); str += 1; // skip ' '
+    parseInt(& str, 'd', & time->year  );
     p[0] = str;
+    return true;
 }
 
+#define assert(func,...)            \
+if (func(__VA_ARGS__) == fail) {    \
+    p = EOL;                        \
+    return fail;                    \
+}
+
+
 bool rxMain(const char * fmt, any * list){
-    static char * p = (char *)"";
-    char buf[32];
+    static char * p = EOL;
+    char          buf[32];
+    union{
+        int32_t   i32;
+        int8_t    i8;
+    };
     //char line[] = "+AT:\"hello?\",12,-129,\"nico\",\"12:34:56:78:9a:bc\",\"192.168.1.1\"";
     //char * p = line;
 
@@ -164,6 +206,7 @@ bool rxMain(const char * fmt, any * list){
         }
         if (fmt[0] != '%'){
             if (fmt[0] != p[0]){
+                p = EOL;
                 return fail;
             }
             p += 1;
@@ -181,32 +224,35 @@ bool rxMain(const char * fmt, any * list){
                 break;
             }
         case 'd':{
-                list->set<int32_t>(parseInt(& p, 'd'));
+                assert(parseInt, & p, 'd', & i32);
+                list->set<int32_t>(i32);
                 break;   
             }
         case 'b':{
-                list->set<int8_t>(parseInt(& p, 'd'));
+                assert(parseInt, & p, 'd', & i32);
+                list->set<int8_t>(i8);
                 break;   
             }
         case 'x':{
-                list->set<int32_t>(parseInt(& p, 'x'));
+                assert(parseInt, & p, 'x', & i32);
+                list->set<int32_t>(i32);
                 break;
             }
         case 'm': {
-                parseNetCode(list, & p, 'x', 6);
+                assert(parseNetCode, list, & p, 'x', 6);
                 break;
             }
         case 'i':{
-                parseNetCode(list, & p, 'd', 4);
+                assert(parseNetCode, list, & p, 'd', 4);
                 break;
             }
         case 't':{
-                parseDateTime(list, & p);
+                assert(parseDateTime, list, & p);
                 break;
             }
         case '%':{
                 if (p[0] != '%'){
-                    return false;
+                    return fail;
                 }
                 p += 1;
                 continue;
@@ -261,7 +307,8 @@ void txMain(const char * fmt, any * list){
                 WRITE_NUM("%x");
             }
         case 'm': {
-                if (list->ptr<uint8_t>() == nullptr){
+                if (list->ptr<uint8_t>() == nullptr || 
+                    list->get<mac>().isEmpty()){
                     continue;
                 }
                 auto mac = list->ptr<uint8_t>();
@@ -272,7 +319,8 @@ void txMain(const char * fmt, any * list){
                 break;
             }
         case 'i':{
-                if (list->ptr<uint8_t>() == nullptr){
+                if (list->ptr<uint8_t>() == nullptr || 
+                    list->get<ipv4>().isEmpty()){
                     continue;
                 }
                 auto ip = list->ptr<uint8_t>();
