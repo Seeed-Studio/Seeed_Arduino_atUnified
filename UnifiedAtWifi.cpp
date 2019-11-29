@@ -1,18 +1,5 @@
 #include"UnifiedAtWifi.h"
-
-#define SET_CWMODE              "AT+CWMODE=%d", mode
-#define ASK_CWMODE              "AT+CWMODE?"
-#define GET_CWMODE              "+CWMODE:%d", mode
-
-#define SET_CWJAP               "AT+CWJAP=%s,%s%+m", ssid, pwd, bssid
-#define ASK_CWJAP               "AT+CWJAP?"
-#define GET_CWJAP               "+CWJAP:%s,%s,%d,%d", token->ssid, token->bssid, token->channel, token->rssi
-
-#define ASK_CWLAP               "AT+CWLAP?"
-#define GET_CWLAP               "+CWLAP:"
-
-#define SET_CWQAP               "AT+CWQAP"
-
+#include"UnifiedAtEvent.h"
 #define CWSAP_ARG(...)                          \
         (__VA_ARGS__ configure)->ssid,          \
         (__VA_ARGS__ configure)->pwd,           \
@@ -20,185 +7,152 @@
         (__VA_ARGS__ configure)->ecn,           \
         (__VA_ARGS__ configure)->maxConnect,    \
         (__VA_ARGS__ configure)->isSsidHidden
-#define SET_CWSAP               "AT+CWSAP=%s,%s,%d,%d%+d%+d", CWSAP_ARG(&)
-#define ASK_CWSAP               "AT+CWSAP?"
-#define GET_CWSAP               "+CWSAP:%s,%s,%d,%d,%d,%d", CWSAP_ARG()
-
-#define ASK_CWLIF               "AT+CWLIF?"
-#define GET_CWLIF               "+CWLIF:%i,%m", item.ip, item.bssid
-
-#define SET_CWDHCP              "AT+CWDHCP=%d,%d", enable, mask
-#define ASK_CWDHCP              "AT+CWDHCP?"
-#define GET_CWDHCP              "+CWDHCP:%d", mask
 
 #define CWDHCPS_ARG(...)                        \
         (__VA_ARGS__ configure)->leaseMinute,   \
         (__VA_ARGS__ configure)->startIp,       \
         (__VA_ARGS__ configure)->endIp
 
-#define SET_CWDHCPS_DISABLE     "AT+CWDHCPS=0"
-#define SET_CWDHCPS             "AT+CWDHCPS:1,%d,%i,%i", CWDHCPS_ARG(&)
-#define ASK_CWDHCPS             "AT+CWDHCPS?"
-#define GET_CWDHCPS             "+CWDHCPS:%d,%i,%i", CWDHCPS_ARG()
-
-#define SET_CWAUTOCONN          "AT+CWAUTOCONN=%d", enable
-#define SET_CWSTARTSMART        "AT+CWSTARTSMART=%d", type
-#define SET_CWSTOPSMART         "AT+CWSTOPSMART"
-#define SET_WPS                 "AT+WPS=%d", enable
-#define SET_CWHOSTNAME          "AT+CWHOSTNAME=%s", name
-#define ASK_CWHOSTNAME          "AT+CWHOSTNAME?"
-#define GET_CWHOSTNAME          "+CWHOSTNAME:%s", name
-#define SET_MDNS_DISABLE        "AT+MDNS=0"
-#define SET_MDNS                "AT+MDNS=1,%s,%s,%d", hostName, String("_") + serviceName, port
-
 extern String readLine();
 
-//
+// mode
+// - 0 : off FR
+// - 1 : station mode
+// - 2 : softap mode
+// - 3 : both station and softap
 CMD(atWifiMode, int32_t mode)
-    tx(SET_CWMODE);
-$
-CMD(atWifiMode, int32_t * mode)
-    tx(ASK_CWMODE);
-    rx(GET_CWMODE);
+    tx("AT+CWMODE=%d", mode);
 $
 
-CMD(atWifiConnect, String const & ssid, String const & pwd, mac const & bssid)
-    tx(SET_CWJAP);
+CMD(atWifiMode, int32_t * mode)
+    tx("AT+CWMODE?");
+    rx("+CWMODE:%d", mode);
+$
+
+CMD(atWifiConnect, String const & ssid, String const & pwd, Mac bssid)
+    tx("AT+CWJAP=%s,%s%+m", ssid, pwd, bssid);
 $
 
 CMD(atWifiConnect, WifiLinkedAp * token)
-    tx(ASK_CWJAP);
-    tx(GET_CWJAP);
+    tx("AT+CWJAP?");
+    rx("+CWJAP:%s,%s,%b,%b", token->ssid, token->bssid, token->channel, token->rssi);
 $
 
-CMD(atWifiScan, std::function<void (WifiLinkInfo &)> && call)
-    String current;
-    tx(ASK_CWLAP);
-    while((current = readLine()).length() == 0){
-        delay(1);
-    }
-    auto lastIndexOf = [](const char * line, char chr, size_t times){
-        for (int i = strlen(line); i-- > 0; ){
-            if (line[i] != chr){
-                continue;
-            }
-            if (--times == 0){
-                return i;
-            }
-        }
-        return -1;
-    };
+void atWifiScanSubfunction(String current);
 
-    while (current.indexOf(GET_CWLAP) != -1){
-        //char    line[] = "+CWLAP:(3,\"POT\",-AL00a\",-53,\"12:34:56:78:9a:bc\",1)";
-        char *  line = (char *)current.c_str();
-        char *  p = nullptr;
-        char *  t;
-        int32_t mac[6]; //need 32bit when use sscanf
-        int32_t ecn;
-        int32_t rssi;
-        int32_t channel;
+void atWifiScan(){
+    tx("AT+CWLAP?");
+}
 
-        p = line + lastIndexOf(line, ',', 3);
+// CMD(atWifiScan, std::vector<WifiApItem> & list)
+//     String current;
+//     atWifiScan();
+//     atWifiScanSubfunction(readLine());
+// $
 
-        sscanf(line, GET_CWLAP "(%d,", & ecn);
-        sscanf(p + 1, "%d,\"%x:%x:%x:%x:%x:%x\",%d", 
-            & rssi,
-            & mac[0],
-            & mac[1],
-            & mac[2],
-            & mac[3],
-            & mac[4],
-            & mac[5],
-            & channel
-        );
-
-        //replace '\"' to '\0'
-        p[0] = ',';
-        p[-1] = '\0';
-
-        WifiLinkInfo info;
-        info.ecn = ecn;
-        info.ssid = strchr(line, ',') + 2; //skip ',' '\"'
-        info.rssi = rssi;
-        copy<uint8_t, int32_t>(info.bssid, mac, 6);
-        info.channel = channel;
-        call(info);
-        current = readLine();
-    }
+CMD(atWifiScanAsync, std::function<void ()> const & callback)
+    atWifiScan();
+    esp.wifi.whenFinishScan = callback;
+    return success;
 $
 
 CMD(atWifiDisconnect)
-    tx(SET_CWQAP);
+    tx("AT+CWQAP");
 $
 
 CMD(atWifiApConfigure, WifiApConfigure const & configure)
-    tx(SET_CWSAP);
+    tx("AT+CWSAP=%s,%s,%d,%d%+d%+d", CWSAP_ARG(&));
 $
 
 CMD(atWifiApConfigure, WifiApConfigure * configure)
-    tx(ASK_CWSAP);
-    rx(GET_CWSAP);
+    tx("AT+CWSAP?");
+    rx("+CWSAP:%s,%s,%d,%d,%d,%d", CWSAP_ARG());
 $
 
-CMD(atWifiUserList, std::function<void (WifiUserList &)> && call)
-    WifiUserList item;
-    for (tx(ASK_CWLIF); rx(GET_CWLIF) == success; ){
-        call(item);
+CMD(atWifiUser, std::vector<WifiUser> & list)
+    WifiUser item;
+    for (tx("AT+CWLIF?"); rx("+CWLIF:%i,%m", item.ip, item.bssid) == success; ){
+        list.push_back(item);
     }
 $
 
+// mask
+// - bit 0 : station DHCP
+// - bit 1 : softap DHCP
+//
+// example
+// enable station DHCP
+// AT+CWDHCP=1,1
+// 
+// diable station DHCP
+// AT+CWDHCP=0,1
+//
+// enable softap DHCP
+// AT+CWDHCP=1,2
+// 
+// diable softap DHCP
+// AT+CWDHCP=0,2
+//
+// enable station and softap DHCP
+// AT+CWDHCP=1,3
+// 
+// diable station and softap DHCP
+// AT+CWDHCP=0,2
 CMD(atDhcp, bool enable, int32_t mask)
-    tx(SET_CWDHCP);
+    tx("AT+CWDHCP=%b,%d", enable, mask);
 $
 
 CMD(atDhcp, int32_t * mask)
-    tx(ASK_CWDHCP);
-    rx(GET_CWDHCP);
+    tx("AT+CWDHCP?");
+    rx("+CWDHCP:%d", mask);
 $
 
 CMD(atDhcpIpRangeClear)
-    tx(SET_CWDHCPS_DISABLE);
+    tx("AT+CWDHCPS=0");
 $
 
 CMD(atDhcpIpRange, IpRange const & configure)
-    tx(SET_CWDHCPS);
+    tx("AT+CWDHCPS:1,%d,%i,%i", CWDHCPS_ARG(&));
 $
 
 CMD(atDhcpIpRange, IpRange * configure)
-    tx(ASK_CWDHCPS);
-    rx(GET_CWDHCPS);
+    tx("AT+CWDHCPS?");
+    rx("+CWDHCPS:%d,%i,%i", CWDHCPS_ARG());
 $
 
 CMD(atApAutoConnect, bool enable)
-    tx(SET_CWAUTOCONN);
+    tx("AT+CWAUTOCONN=%b", enable);
 $
 
 CMD(atApStartSmart, int32_t type)
-    tx(SET_CWSTARTSMART);
+    ta("AT+CWSTARTSMART");
+    type != leaveOut && 
+    ta("=%d", type);
+    tx(""); // END LINE
 $
 
 CMD(atApStopSmart)
-    tx(SET_CWSTOPSMART);
+    tx("AT+CWSTOPSMART");
 $
 
 CMD(atWps, bool enable)
-    tx(SET_WPS);
+    tx("AT+WPS=%b", enable);
 $
 
-CMD(atHostNameTemp, String const & name)
-    tx(SET_CWHOSTNAME);
+CMD(atStationHostName, String const & name)
+    tx("AT+CWHOSTNAME=%s", name);
 $
 
-CMD(atHostNameTemp, String * name)
-    tx(ASK_CWHOSTNAME);
-    rx(GET_CWHOSTNAME);
+CMD(atStationHostName, String * name)
+    tx("AT+CWHOSTNAME?");
+    rx("+CWHOSTNAME:%s", name);
 $
 
 CMD(atMdnsDisable)
-    tx(SET_MDNS_DISABLE);
+    tx("AT+MDNS=0");
 $
 
 CMD(atMdns, String hostName, String serviceName, int32_t port)
-    tx(SET_MDNS);
+    tx("AT+MDNS=1,%s,%s,%d", hostName, String("_") + serviceName, port);
 $
+

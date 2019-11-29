@@ -1,5 +1,4 @@
 #include"UnifiedAtType.h"
-#define ATE             "ATE%d", enable
 #define EOL             ((char *)"")
 
 #ifdef USE_AT_SERIAL
@@ -15,18 +14,43 @@
 
 volatile bool needWaitWeekup = false;
 volatile bool isEndLine = true;
+String peekValue = "";
 
 #ifdef USE_SERIAL_COM
-    bool available(){
-        return com.available() != 0;
+    int available(){
+        return com.available();
+    }
+    int read(){
+        return com.read();
+    }
+    String peekPrefix(){
+        char buf[48] = { 0 };
+        if (peekValue.length() == 0){
+            for (size_t i = 0; i < sizeof(buf); i++) {
+                buf[i] = com.peek();
+                if (buf[i] == '\r'){
+                    break;
+                }
+
+                com.read();
+
+                if (buf[i] == ':'){
+                    break;
+                }
+            }
+            peekValue = buf;
+        }
+        return peekValue;
+    }
+    void clearPrefix(){
+        peekValue = "";
     }
     String readLine(){
-        String && line = com.readStringUntil('\n');
-        if (line.length() == 0){
-            return line;
+        while(available() == 0);
+        String line = peekValue + com.readStringUntil('\n');
+        if (line.length()){
+            line = line.substring(0, line.length() - 1);
         }
-        line = line.substring(0, line.length() - 1);
-        //debug(line.c_str());
         return line;
     }
     void write(char value){
@@ -39,15 +63,18 @@ volatile bool isEndLine = true;
     }
     bool atBegin(){
         com.begin(115200);
-        while(readLine().length());
-        return atTest();
+        while(available());
+        tx("ATE0");
+        return waitFlag();
     }
 #endif
 
-bool waitFlag(){
+uint8_t waitFlag(const char * externFlag){
     while(true){
         String ack = readLine();
-        //debug("E:%s\n", ack.c_str());
+        if (externFlag && ack.indexOf(externFlag) >= 0){
+            return match;
+        }
         if (ack.indexOf(AT_OK) >= 0){
             return success;
         }
@@ -94,7 +121,7 @@ bool parseInt(char ** p, char type, int32_t * v){
 };
 
 //parse mac/ip
-//mac format
+//Mac format
 //12:34:56:78:9a:bc
 //ip format
 //192.168.1.1
@@ -174,18 +201,17 @@ bool parseDateTime(any * list, char ** p){
     parseInt(& str, 'd', & time->second); str += 1; // skip ' '
     parseInt(& str, 'd', & time->year  );
     p[0] = str;
-    return true;
+    return success;
 }
 
 #define assert(func,...)            \
 if (func(__VA_ARGS__) == fail) {    \
-    p = EOL;                        \
     return fail;                    \
 }
 
 
 bool rxMain(const char * fmt, any * list){
-    static char * p = EOL;
+    char *        p = (char *)readLine().c_str();
     char          buf[32];
     union{
         int32_t   i32;
@@ -193,8 +219,9 @@ bool rxMain(const char * fmt, any * list){
     };
     //char line[] = "+AT:\"hello?\",12,-129,\"nico\",\"12:34:56:78:9a:bc\",\"192.168.1.1\"";
     //char * p = line;
-
-    for(; fmt[0]; fmt++){
+    debug("%s\n", p);
+    
+    while(fmt[0]){
         if (p[0] == '\0'){
             if (fmt[0] == '\n'){
                 fmt += 1;
@@ -204,16 +231,21 @@ bool rxMain(const char * fmt, any * list){
                 return success;
             }
         }
-        if (fmt[0] != '%'){
-            if (fmt[0] != p[0]){
-                p = EOL;
+        if (fmt[0] == '%'){
+            fmt += 1;
+        }
+        else {
+            if (fmt[0] == p[0]){
+                fmt += 1;
+                p += 1;
+                continue;
+            }
+            else{
                 return fail;
             }
-            p += 1;
-            continue;
         }
-        
-        fmt += 1;
+
+        debug("\nC:%c%c", fmt[0], p[0]);
 
         switch(fmt[0]){
         case 's': {
@@ -225,8 +257,9 @@ bool rxMain(const char * fmt, any * list){
             }
         case 'd':{
                 assert(parseInt, & p, 'd', & i32);
+                debug("\nget:%d\n", i32);
                 list->set<int32_t>(i32);
-                break;   
+                break;
             }
         case 'b':{
                 assert(parseInt, & p, 'd', & i32);
@@ -252,6 +285,7 @@ bool rxMain(const char * fmt, any * list){
             }
         case '%':{
                 if (p[0] != '%'){
+                    p = EOL;
                     return fail;
                 }
                 p += 1;
@@ -267,16 +301,19 @@ bool rxMain(const char * fmt, any * list){
 }
 
 
-#define WRITE_NUM(fmt)          \
-auto v = list->get<int32_t>();  \
+#define WRITE_NUM(type,fmt)     \
+auto v = list->get<type>();     \
 if (mayHidden){                 \
     if (v == leaveOut){         \
         continue;               \
     }                           \
 }                               \
 sprintf(buf, fmt, v);           \
+SPLIT_CHAR()                    \
 write(buf);                     \
 break;
+
+#define SPLIT_CHAR()    if (mayHidden){ write(","); }
 
 void txMain(const char * fmt, any * list){
     char buf[32];
@@ -293,46 +330,52 @@ void txMain(const char * fmt, any * list){
         switch(fmt[0]){
         case 's': {
                 if (list->get<String>() == nullptr){
-                    continue;
+                    return;
                 }
+                SPLIT_CHAR();
                 write('\"');
                 write(list->get<String>().c_str());
                 write('\"');
                 break;
             }
+        case 'b':{
+                WRITE_NUM(int8_t, "%d");
+            }
         case 'd':{
-                WRITE_NUM("%d");
+                WRITE_NUM(int32_t, "%d");
             }
         case 'x':{
-                WRITE_NUM("%x");
+                WRITE_NUM(int32_t, "%x");
             }
         case 'm': {
-                if (list->ptr<uint8_t>() == nullptr || 
+                if (list->ptr<uint8_t>() == nullptr ||
                     list->get<mac>().isEmpty()){
-                    continue;
+                    return;
                 }
-                auto mac = list->ptr<uint8_t>();
+                auto Mac = list->ptr<uint8_t>();
                 sprintf(buf, "\"%.2x:%.2x:%.2x:%.2x:%.2x:%.2x\"",
                     mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]
                 );
+                SPLIT_CHAR();
                 write(buf);
                 break;
             }
         case 'i':{
-                if (list->ptr<uint8_t>() == nullptr || 
-                    list->get<ipv4>().isEmpty()){
-                    continue;
+                if (list->ptr<uint8_t>() == nullptr ||
+                    list->get<Ipv4>().isEmpty()){
+                    return;
                 }
                 auto ip = list->ptr<uint8_t>();
                 sprintf(buf, "\"%d.%d.%d.%d\"",
                     ip[0], ip[1], ip[2], ip[3]
                 );
+                SPLIT_CHAR();
                 write(buf);
                 break;
             }
         case '%':{
                 write('%');
-                continue;
+                continue; // skip list += 1;
             }
         }
 
@@ -340,7 +383,6 @@ void txMain(const char * fmt, any * list){
         // for(;; list += 1)
         list += 1;
     }
-    write(END_LINE);
 }
 
 bool tx(const char * cmd){
@@ -348,18 +390,17 @@ bool tx(const char * cmd){
     write(END_LINE);
     return true;
 }
+bool ta(const char * cmd){
+    write(cmd);
+    return true;
+}
+bool tb(uint8_t const * buffer, size_t length){
+    for (size_t i = 0; i < length; i++){
+        write(buffer[i]);
+    }
+    return true;
+}
 
 CMD(atTest)
-    tx(AT);
+    tx("AT");
 $
-
-//DON'T USE -> CMD(atEcho, bool enable)
-//BUT -> bool atEcho(bool enable)
-bool atEcho(bool enable){
-    //echo will be enable when reset
-    //THIS CMD NEED NOT 'SET' SUFIX
-    //AND DON'T USE CMD(atEcho, bool enable) FORMAT, IT WILL RESULT RECURRENCE.
-    if (isNotWakeup()) return fail;
-    tx(ATE); 
-    return waitFlag();
-}

@@ -1,59 +1,102 @@
 #include"UnifiedAtTcpIp.h"
+#include"UnifiedRingBuffer.h"
+#include"Utilities.h"
+#define MAX_PACKET_CHANNEL      5
 
-CMD(atIpStatus, int32_t * status)
+UnifiedRingBuffer<uint8_t> packetBuffers[MAX_PACKET_CHANNEL];
+
+bool atAvailableChannel(int32_t * value){
+    int32_t  status;
+    uint32_t freeChannel = (1 << MAX_PACKET_CHANNEL) - 1;
+    std::vector<ConnectedItem> items;
+    if (atIpStatus(& status, items) == fail || items.size() == 0){
+        return fail;
+    }
+
+    for (auto & item : items){
+        freeChannel ^= 1 << item.id; // mark the channel in use.
+    }
+
+    auto i = indexOfSetBit(freeChannel);
+
+    if (i == -1){
+        return fail;
+    }
+
+    value[0] = i;
+    return success;
+}
+
+CMD(atIpStatus, int32_t * status, std::vector<ConnectedItem> & list)
     tx("AT+CIPSTATUS");
     rx("STATUS:%d", status);
-    // more-----------------------------------------------------
-    // rx("+CIPSTATUS:<link	ID>,<type>,<remote	IP>,<remote	port>,<localport>,<tetype>");
+
+    std::vector<ConnectedItem> tmp;
+    ConnectedItem item;
+
+    while(
+        rx("+CIPSTATUS:%d,%s,%i,%d,%d,%d", 
+            item.id,
+            item.type,
+            item.remoteIp,
+            item.remotePort,
+            item.localPort,
+            item.asService
+        ) != fail){
+        tmp.push_back(item);
+    }
+    if (& list != nullptr){
+        list = tmp;
+    }
 $
 
-CMD(atGetIpByDomainName, String const & domainName, ipv4 * ip)
+CMD(atGetIpByDomainName, String const & domainName, Ipv4 * ip)
     tx("AT+CIPDOMAIN=%s", domainName);
     rx("+CIPDOMAIN:%i", ip);
 $
 
-CMD(atDns, bool userDefinedDns, ipv4 const & dns1, ipv4 const & dns2)
+CMD(atDns, bool userDefinedDns, Ipv4 dns1, Ipv4 dns2)
     tx("AT+CIPDNS=%d%+i%+i", userDefinedDns, dns1, dns2);
 $
 
-CMD(atDns, bool userDefinedDns, ipv4 * dns1, ipv4 * dns2)
+CMD(atDns, bool userDefinedDns, Ipv4 * dns1, Ipv4 * dns2)
     tx("AT+CIPDNS=%d%+i%+i", userDefinedDns, dns1, dns2);
 $
 
-CMD(atDns, ipv4 * dns1, ipv4 * dns2)
+CMD(atDns, Ipv4 * dns1, Ipv4 * dns2)
     tx("AT+CIPDNS?");
     rx("+CIPDNS:%i\n+CIPDNS:%i", dns1, dns2);
 $
 
-CMD(atStationMac, mac const & address)
+CMD(atStationMac, Mac const & address)
     tx("AT+CIPSTAMAC=%m", address);
 $
 
-CMD(atStationMac, mac * address)
+CMD(atStationMac, Mac * address)
     tx("AT+CIPSTAMAC?");
     rx("+CIPSTAMAC:%m", address);
 $
 
-CMD(atApMac, mac const & address)
+CMD(atApMac, Mac const & address)
     tx("AT+CIPAPMAC=%m", address);
 $
 
-CMD(atApMac, mac * address)
+CMD(atApMac, Mac * address)
     tx("AT+CIPAPMAC?");
     rx("+CIPAPMAC:%m", address);
 $
 
 CMD(atStationIp, 
-    ipv4 const & ip, 
-    ipv4 const & gateway, 
-    ipv4 const & netmask)
+    Ipv4 const & ip, 
+    Ipv4 const & gateway, 
+    Ipv4 const & netmask)
     tx("AT+CIPSTA=%i%+i%+i", ip, gateway, netmask);
 $
 
 CMD(atStationIp, 
-    ipv4 * ip, 
-    ipv4 * gateway, 
-    ipv4 * netmask)
+    Ipv4 * ip, 
+    Ipv4 * gateway, 
+    Ipv4 * netmask)
     tx("AT+CIPSTA?");
     rx(
         "+CIPSTA:ip:%i\n"
@@ -63,16 +106,16 @@ CMD(atStationIp,
 $
 
 CMD(atApIp, 
-    ipv4 const & ip, 
-    ipv4 const & gateway, 
-    ipv4 const & netmask)
+    Ipv4 const & ip, 
+    Ipv4 const & gateway, 
+    Ipv4 const & netmask)
     tx("AT+CIPAP=%i%+i%+i", ip, gateway, netmask);
 $
 
 CMD(atApIp, 
-    ipv4 * ip, 
-    ipv4 * gateway, 
-    ipv4 * netmask)
+    Ipv4 * ip, 
+    Ipv4 * gateway, 
+    Ipv4 * netmask)
     tx("AT+CIPAP?");
     rx(
         "+CIPAP:ip:%i\n"
@@ -81,29 +124,30 @@ CMD(atApIp,
         ip, gateway, netmask);
 $
 
-CMD(atConnect, TcpSslConnection const & info, int32_t id)
+CMD(atIpConnect, TcpSslConnection const & info, int32_t id)
     // Format:
     // AT+CIPSTART="TCP","192.168.101.110",1000
     // when use multiple connections
     // then the first param is connection id
     // AT+CIPSTART=1,"TCP","192.168.101.110",1000
-    tx("AT+CIPSTART=");
-    id != leaveOut && tx("%d,", id); // skip when id is leaveOut
-    tx("%s,%s,%d%+d", 
+    ta("AT+CIPSTART=");
+    id != leaveOut && ta("%d,", id);
+    tx("%s,%s,%d%+d",
         info.type,
         info.ipOrDomain, 
         info.port, 
-        info.secondOfKeepAlive);
+        info.secondOfKeepAlive
+    );
 $
 
-CMD(atConnect, UdpConnection const & info, int32_t id)
+CMD(atIpConnectCore, UdpConnection const & info, int32_t id)
     // Format:
     // AT+CIPSTART="UDP","192.168.101.110",1000,1002,2
     // when use multiple connections
     // then the first param is connection id
     // AT+CIPSTART=1,"TCP","192.168.101.110",1000
-    tx("AT+CIPSTART=");
-    id != leaveOut && tx("%d,", id); // skip when id is leaveOut
+    ta("AT+CIPSTART=");
+    id != leaveOut && ta("%d,", id); // skip when id is leaveOut
     tx("%s,%s,%d%+d%+d", 
         info.type,
         info.ipOrDomain, 
@@ -112,37 +156,90 @@ CMD(atConnect, UdpConnection const & info, int32_t id)
         info.mode);
 $
 
+bool atIpConnect(UdpConnection const & info, int32_t rxBufferSize, int32_t id){
+    if (atIpConnectCore(info, id) == fail){
+        return fail;
+    }
+    if (id == leaveOut) id = 0;
+    packetBuffers[id].setup(rxBufferSize);
+    return packetBuffers[id];
+}
+
+namespace{
+    bool send(uint8_t const * buffer, size_t length){
+        if (waitFlag(">") != fail){
+            return tb(buffer, length);
+        }
+        else{
+            return fail;
+        }
+    }
+}
+
 // type:
 // - 0: Non-certification
 // - 1: Load cert and private key, for server authentication
 // - 2: Loading cert and private key of CA, Certified server
 // - 3: Two-way authentication, SSL client and server to authenticate each otherundefineds certificate
-CMD(atSslConfigure, int32_t type, int32_t certKeyId, int32_t CaId, int32_t id)
-    tx("AT+CIPSSLCCONF=");
-    id != leaveOut && tx("%d,", id);
+CMD(atIpSslConfigure, int32_t type, int32_t certKeyId, int32_t CaId, int32_t id)
+    ta("AT+CIPSSLCCONF=");
+    id != leaveOut && ta("%d,", id);
     tx("%d,%d,%d", type, certKeyId, CaId);
 $
 
 CMD(atIpSend, uint8_t const * buffer, int32_t length, int32_t id)
-    tx("AT+CIPSEND=");
-    id != leaveOut && tx("%d,", id);
+    ta("AT+CIPSEND=");
+    id != leaveOut && 
+    ta("%d,");
     tx("%d", length);
-    ///--------------------------------- buffer
+    send(buffer, length);
 $
 
-CMD(atIpSend, uint8_t const * buffer, int32_t length, ipv4 ip, int32_t port, int32_t id)
-    tx("AT+CIPSEND=");
-    id != leaveOut && tx("%d,", id);
+CMD(atIpSend, uint8_t const * buffer, int32_t length, Ipv4 ip, int32_t port, int32_t id)
+    ta("AT+CIPSEND=");
+    id != leaveOut && 
+    ta("%d,", id);
     tx("%d,%i,%d", length, ip, port);
+    send(buffer, length);
 $
+
+CMD(atIpAvailable, int32_t * size, int32_t id)
+    if (id == leaveOut) id = 0;
+    size[0] = packetBuffers[id].available();
+    return success;
+$
+
+bool atIpPeek(int32_t * buffer, int32_t id){
+    if (id == leaveOut) id = 0;
+    buffer[0] = packetBuffers[id].peek();
+    return success;
+}
+bool atIpReceive(uint8_t * buffer, int32_t length, int32_t * actuallyLength, int32_t id){
+    if (id == leaveOut) id = 0;
+    size_t i = 0;
+    auto & packet = packetBuffers[id];
+
+    for (; i < length && packet.available(); i++) {
+        buffer[i] = packet.read_char();
+    }
+    if (actuallyLength){
+        actuallyLength[0] = i;
+    }
+    return success;
+}
 
 // id is not needed when at single connection mode
 // when at multiconnection mode
 // id range 0~4
 // - 5: Close all transmission
 CMD(atIpClose, int32_t id)
-    tx("AT+CIPCLOSE") && id != leaveOut && 
-    tx("=%d", id);
+    ta("AT+CIPCLOSE");
+    id != leaveOut &&
+    ta("=%d");
+    tx(""); //END LINE
+
+    if (id == leaveOut) id = 0;
+    packetBuffers[id].clear();
 $
 
 CMD(atIpInfo, IpInfo * info)
@@ -160,7 +257,7 @@ CMD(atIpInfo, IpInfo * info)
 $
 
 CMD(atIpMux, bool enable)
-    tx("AT+CIPMUX=%d", enable);
+    tx("AT+CIPMUX=%b", enable);
 $
 
 CMD(atIpMux, bool * enable)
@@ -169,10 +266,7 @@ CMD(atIpMux, bool * enable)
 $
 
 CMD(atIpServer, bool enable, int32_t port, bool sslCaEnable)
-    tx("AT+CIPSERVER=%d%+d%+d", 
-        enable, 
-        port, 
-        port == leaveOut ? leaveOut : int32_t(sslCaEnable));
+    tx("AT+CIPSERVER=%b%+d%+b", enable, port, sslCaEnable);
 $
 
 CMD(atIpServer, bool * enable, int32_t * port, bool * sslCaEnable)
@@ -185,11 +279,11 @@ CMD(atIpServer, bool * enable, int32_t * port, bool * sslCaEnable)
     rx(",\"SSL\",%b", sslCaEnable);
 $
 
-CMD(atServerMaxConnection, int32_t count)
+CMD(atIpServerMaxConnection, int32_t count)
     tx("AT+CIPSERVERMAXCONN=%d", count);
 $
 
-CMD(atServiceMaxConnection, int32_t * count)
+CMD(atIpServiceMaxConnection, int32_t * count)
     tx("AT+CIPSERVERMAXCONN?");
     rx("+CIPSERVERMAXCONN:%d", count);
 $
@@ -211,8 +305,8 @@ $
 //passthrough
 //- 0 : Normal mode, ESP32 will NOT enter UART-Wi-Fi passthrough mode on power-up.
 //- 1 : ESP32 will enter UART-Wi-Fi passthrough mode on power-up.
-CMD(atSaveConnection, bool passthrough, TcpSslConnection const & info)
-    tx("AT+SAVETRANSLINK=%d,%s,%d%+s%+d", 
+CMD(atIpSaveConnection, bool passthrough, TcpSslConnection const & info)
+    tx("AT+SAVETRANSLINK=%b,%s,%d%+s%+d", 
         passthrough,
         info.ipOrDomain, 
         info.port, 
@@ -220,8 +314,8 @@ CMD(atSaveConnection, bool passthrough, TcpSslConnection const & info)
         info.secondOfKeepAlive);
 $
 
-CMD(atSaveConnection, bool passthrough, UdpConnection const & info)
-    tx("AT+SAVETRANSLINK=%d,%s,%d%+s%+d", 
+CMD(atIpSaveConnection, bool passthrough, UdpConnection const & info)
+    tx("AT+SAVETRANSLINK=%n,%s,%d%+s%+d", 
         passthrough,
         info.ipOrDomain, 
         info.port, 
@@ -233,7 +327,7 @@ $
 //   0 : TCP server will never timeout.
 // > 0 : TCP server will disconnect from the TCP client that does not communicate with it until timeout.
 CMD(atIpTimeout, int32_t second)
-    tx("AT+CIPSTO", second);
+    tx("AT+CIPSTO=%d", second);
 $
 
 CMD(atIpTimeout, int32_t * second)
@@ -241,16 +335,16 @@ CMD(atIpTimeout, int32_t * second)
     rx("+CIPSTO:%d", second);
 $
 
-CMD(atTimeSource, bool enable, TimeSource const & src)
+CMD(atIpTimeSource, bool enable, TimeSource const & src)
     tx("AT+CIPSNTPCFG=%d%+d%+s%+s%+s", 
-        enable, 
+        enable,
         src.timezone,
         src.domain[0],
         src.domain[1],
         src.domain[2]);
 $
 
-CMD(atTimeSource, bool * enable, TimeSource * src)
+CMD(atIpTimeSource, bool * enable, TimeSource * src)
     tx("AT+CIPSNTPCFG?");
     rx("+CIPSNTPCFG:%b", enable) && enable[0] && src &&
     rx(",%d,%s,%s,%s", 
@@ -260,7 +354,7 @@ CMD(atTimeSource, bool * enable, TimeSource * src)
         src->domain[2]);
 $
 
-CMD(atDateTime, DateTime * result)
+CMD(atIpDateTime, DateTime * result)
     // Format:
     // +CIPSNTPTIME:Mon Dec 12 02:33:32 2016
     tx("AT+CIPSNTPTIME?");
@@ -270,7 +364,7 @@ $
 // // AT+CIUPDATE
 // CMD(atUpdateByWifi, int32_t mode)
 
-CMD(atPing, String const & ipOrDomain, int32_t * ms)
+CMD(atIpPing, String const & ipOrDomain, int32_t * ms)
     tx("AT+PING=%s", ipOrDomain);
     rx("+PING:%d", ms);
 $

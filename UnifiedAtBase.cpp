@@ -1,92 +1,87 @@
 #include"UnifiedAtBase.h"
 
-#define SET_RST         "AT+RST"
-#define GET_GMR         "+GMR:%s\n%+GMR:%s\n%+GMR:%s\n%+GMR:%s",    \
-                        info->atVersion,                            \
-                        info->sdkVersion,                           \
-                        info->compileTime,                          \
-                        info->binVersion
-#define ASK_GMR         "AT+GMR?"
-#define SET_GSLP        "AT+GSLP=%d", ms
-#define SET_SLEEP       "AT+SLEEP=%d", mode
-#define ASK_SLEEP       "AT+SLEEP?"
-#define GET_SLEEP       "+SLEEP:%b", mode
-
 #define UART_ARG(...)   (__VA_ARGS__ config)->rate,                 \
                         (__VA_ARGS__ config)->databits,             \
                         (__VA_ARGS__ config)->stopbits,             \
                         (__VA_ARGS__ config)->parity,               \
                         (__VA_ARGS__ config)->flowControl
 
-#define SET_UART_CUR    "AT+UART_CUR=%d,%d,%d,%d,%d", UART_ARG(&)
-#define ASK_UART_CUR    "AT+UART_CUR?"
-#define GET_UART_CUR    "+UART_CUR:%d,%d,%d,%d,%d",   UART_ARG()
-
-#define SET_UART_DEF    "AT+UART_DEF=%d,%d,%d,%d,%d", UART_ARG(&)
-#define ASK_UART_DEF    "AT+UART_DEF?"
-#define GET_UART_DEF    "+UART_DEF:%d,%d,%d,%d,%d",   UART_ARG()
-
-#define ASK_SYSRAM      "AT+SYSRAM?"
-#define GET_SYSRAM      "+SYSRAM:%d", bytes
-
 #define SYSFLASH    
-#define FS          
-#define RFPOWER         "+RFPOWER"
+#define FS
 
 extern volatile bool needWaitWeekup;
 extern bool atBegin();
 extern void waitReady();
 extern String readLine();
 
-CMD(atReset, actionMode mode)
-    tx(SET_RST);
-    if (mode == actionMode::waitReady){
-        waitReady();
-        return success;
-    }
-    needWaitWeekup = true;
+CMD(atReset)
+    tx("AT+RST");
+    waitReady();
 $
 
 CMD(atFirmwareInfo, FirmwareInfo * info)
-    tx(ASK_GMR);
-    rx(GET_GMR);
+    tx("AT+GMR?");
+    rx("+GMR:%s\n%+GMR:%s\n%+GMR:%s\n%+GMR:%s", 
+        info->atVersion, 
+        info->sdkVersion, 
+        info->compileTime, 
+        info->binVersion);
 $
 
 CMD(atDeepSleep, int32_t ms)
     needWaitWeekup = true;
-    tx(SET_GSLP);
+    tx("AT+GSLP=%d", ms);
     return success; // no response, return directly
 $
 
 CMD(atUartTemp, AtUartConfig const & config)
-    tx(SET_UART_CUR);
+    tx("AT+UART_CUR=%d,%d,%d,%d,%d", UART_ARG(&));
 $
 
 CMD(atUartTemp, AtUartConfig * config)
-    tx(ASK_UART_CUR);
-    tx(GET_UART_CUR);
+    tx("AT+UART_CUR?");
+    tx("+UART_CUR:%d,%d,%d,%d,%d",   UART_ARG());
 $
 
-CMD(atUartNovolatile, AtUartConfig const & config)
-    tx(SET_UART_DEF);
+CMD(atUartSave, AtUartConfig const & config)
+    tx("AT+UART_DEF=%d,%d,%d,%d,%d", UART_ARG(&));
 $
 
-CMD(atUartNovolatile, AtUartConfig * config)
-    tx(ASK_UART_DEF);
-    tx(GET_UART_DEF);
+CMD(atUartSave, AtUartConfig * config)
+    tx("AT+UART_DEF?");
+    tx("+UART_DEF:%d,%d,%d,%d,%d",   UART_ARG());
 $
 
 CMD(atRam, int32_t * bytes)
-    tx(ASK_SYSRAM);
-    rx(GET_SYSRAM, bytes);
+    tx("AT+SYSRAM?");
+    rx("+SYSRAM:%d", bytes, bytes);
 $
 
 CMD(atSleepMode, bool mode)
-    tx(SET_SLEEP);
+    tx("AT+SLEEP=%b", mode);
 $
 
 CMD(atSleepMode, bool * mode)
-    tx(SET_SLEEP);
-    rx(GET_SLEEP);
+    tx("AT+SLEEP=%d", mode);
+    rx("+SLEEP:%b", mode);
+$
+
+CMD(atRfPower, RfPower const & config)
+    tx("AT+RFPOWER=%d%+d%+d%+d", 
+        config.wifiPower,
+        config.bleAdvertisingPower,
+        config.bleScanPower,
+        config.bleConntionPower
+    );
+$
+
+CMD(atRfPower, RfPower * config)
+    tx("AT+RFPOWER?");
+    rx("+RFPOWER:%d,%d,%d,%d", 
+        config->wifiPower,
+        config->bleAdvertisingPower,
+        config->bleScanPower,
+        config->bleConntionPower
+    );
 $
 

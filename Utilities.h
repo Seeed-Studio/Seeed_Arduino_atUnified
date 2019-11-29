@@ -2,7 +2,7 @@
 #include"stdint.h"
 
 template<class type>
-constexpr int32_t indexOfSetBit(type value){
+int32_t indexOfSetBit(type value){
     static_assert(type(-1) > 0, "type need match unsigned type");
     int32_t index = 0;
     type v = value;
@@ -21,6 +21,6 @@ constexpr int32_t indexOfSetBit(type value){
 }
 
 template<class type>
-constexpr int32_t indexOfResetBit(type value){
+int32_t indexOfResetBit(type value){
     return indexOfSetBit(~value);
 }

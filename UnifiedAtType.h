@@ -1,9 +1,9 @@
 #pragma once
 #ifndef ARDUINO
+    #include<Arduino.h>
     #include<string>
     typedef std::string String;
 #else
-    #include<Arduino.h>
     #include<WString.h>
 #endif
 
@@ -13,10 +13,16 @@
     #undef max
     #undef min
     #include<functional>
+    #include<vector>
+    #include<queue>
+    #include<memory>
     #pragma pop(min)
     #pragma pop(max)
 #else
     #include<functional>
+    #include<vector>
+    #include<queue>
+    #include<memory>
 #endif
 
 #include<stdio.h>
@@ -33,20 +39,13 @@
 #define SET             "="
 #define ASK             "?"
 #define CMD(name,...)                       \
-inline bool name(__VA_ARGS__) {             \
-    extern bool atEcho(bool);               \
-    extern bool waitFlag();                 \
-    if (atEcho(false) == fail) return fail;
+bool name(__VA_ARGS__) {
+
 #define $                return waitFlag(); }
 #define debug(...)       Serial.printf(__VA_ARGS__);
 
 bool atTest();
 bool atBegin();
-
-enum class actionMode{
-    waitReady,
-    async,
-};
 
 template<class a, class b>
 void copy(a * des, b const * src, size_t length){
@@ -57,13 +56,14 @@ void copy(a * des, b const * src, size_t length){
 
 struct any{
     template<class type>
-    any(const type * v) : data((type *)v){}
+    any(type * v) : data(v){} // not [type const *]
 
     template<class type>
     any(type const & v) : data(& (type &)v){}
 
     template<class type>
     void set(type const & value){
+        debug("\nset:%p\n", data);
         *(type *)data = value;
     }
     template<class type>
@@ -84,26 +84,6 @@ private:
     void * data;
 };
 
-template<uint32_t length>
-struct NetCode{
-    uint8_t * operator &(){
-        return code;
-    }
-    operator uint8_t * (){
-        return code;
-    }
-    bool isEmpty(){
-        for (size_t i = 0; i < length; i++){
-            if (code[i] != 0){
-                return false;
-            }
-        }
-        return true;
-    }
-    NetCode() : code { 0 }{}
-private:
-    uint8_t code[length];
-};
 
 struct nullref_t{
     template<class type>
@@ -112,35 +92,19 @@ struct nullref_t{
     }
 };
 
-enum DayOfWeek{
-    Sun, Mon, Tue, Wen, Thu, Fri, Sat, NotDayOfWeek
-};
-
-enum Month{
-    Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec, NotMonth
-};
-
-class DateTime{
-public:
-    //USE THE 32BIT int32_t FOR sscanf
-    int32_t year;
-    int32_t month;
-    int32_t day;
-    int32_t hour;
-    int32_t minute;
-    int32_t second;
-    int32_t dayOfWeek;
-};
 
 constexpr bool disable      = false;
 constexpr bool enable       = true;
-constexpr bool fail         = false;
-constexpr bool success      = true;
+constexpr uint8_t fail      = 0;
+constexpr uint8_t success   = 1;
+constexpr uint8_t match     = 2;
 constexpr int32_t leaveOut  = int32_t(0x80000000);
 constexpr nullref_t nullref = {};
 
-typedef NetCode<4> ipv4;
-typedef NetCode<6> mac;
+
+bool ta(const char * cmd);
+bool tb(uint8_t const * buffer, size_t length);
+bool tx(const char * cmd);
 
 template<class ... arg>
 bool rx(const char * fmt, arg & ... list){
@@ -150,12 +114,22 @@ bool rx(const char * fmt, arg & ... list){
 }
 
 template<class ... arg>
-bool tx(const char * fmt, arg ... list){
+bool ta(const char * fmt, arg const & ... list){
     void txMain(const char * fmt, any * list);
     any     ls[] = { list... };
     txMain(fmt, ls);
     return true;
 }
 
-bool tx(const char * cmd);
+template<class ... arg>
+bool tx(const char * fmt, arg const & ... list){
+    void txMain(const char * fmt, any * list);
+    any     ls[] = { list... };
+    txMain(fmt, ls);
+    tx("");
+    return true;
+}
+
+
+uint8_t waitFlag(const char * externFlag = nullptr);
 
