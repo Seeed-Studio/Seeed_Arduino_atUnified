@@ -24,3 +24,4 @@ template<class type>
 int32_t indexOfResetBit(type value){
     return indexOfSetBit(~value);
 }
+

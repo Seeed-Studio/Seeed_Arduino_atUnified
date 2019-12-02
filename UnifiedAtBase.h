@@ -1,33 +1,19 @@
 #pragma once
 #include"UnifiedAtType.h"
 
-class FirmwareInfo{
-public:
+struct FirmwareInfo{
     String atVersion;
     String sdkVersion;
     String compileTime;
     String binVersion;
 };
 
-class AtUartConfig {
-public:
+struct AtUartConfig {
     int32_t  rate;
     int32_t  databits;
     int32_t  stopbits;
     int32_t  parity;
     int32_t  flowControl;
-};
-
-class RfPower{
-public:
-    int32_t wifiPower;
-    int32_t bleAdvertisingPower;
-    int32_t bleScanPower;
-    int32_t bleConntionPower;
-    RfPower() : 
-        bleAdvertisingPower(leaveOut),
-        bleScanPower(leaveOut),
-        bleConntionPower(leaveOut) {}
 };
 
 bool atReset();
@@ -37,7 +23,14 @@ bool atUartTemp(AtUartConfig const & config);
 bool atUartSave(AtUartConfig const & config);
 bool atSleepMode(bool enable);
 bool atSleepMode(bool * result);
-bool atRfPower(int32_t wifi);
-bool atRfPower(RfPower const & config);
-bool atRfPower(RfPower * config);
+bool atRfPower(
+    int32_t const & wifiPower, 
+    int32_t const & bleAdvertisingPower = nullref, 
+    int32_t const & bleScanPower = nullref, 
+    int32_t const & bleConntionPower = nullref);
+bool atRfPower(
+    int32_t * wifiPower,
+    int32_t * bleAdvertisingPower = nullptr,
+    int32_t * bleScanPower = nullptr,
+    int32_t * bleConntionPower = nullptr);
 

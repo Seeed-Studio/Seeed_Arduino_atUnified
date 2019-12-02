@@ -9,14 +9,8 @@
 #define SYSFLASH    
 #define FS
 
-extern volatile bool needWaitWeekup;
-extern bool atBegin();
-extern void waitReady();
-extern String readLine();
-
 CMD(atReset)
     tx("AT+RST");
-    waitReady();
 $
 
 CMD(atFirmwareInfo, FirmwareInfo * info)
@@ -29,59 +23,56 @@ CMD(atFirmwareInfo, FirmwareInfo * info)
 $
 
 CMD(atDeepSleep, int32_t ms)
-    needWaitWeekup = true;
-    tx("AT+GSLP=%d", ms);
+    tx("AT+GSLP=", ms);
     return success; // no response, return directly
 $
 
 CMD(atUartTemp, AtUartConfig const & config)
-    tx("AT+UART_CUR=%d,%d,%d,%d,%d", UART_ARG(&));
+    tx("AT+UART_CUR=", UART_ARG(&));
 $
 
 CMD(atUartTemp, AtUartConfig * config)
     tx("AT+UART_CUR?");
-    tx("+UART_CUR:%d,%d,%d,%d,%d",   UART_ARG());
+    tx("+UART_CUR:",   UART_ARG());
 $
 
 CMD(atUartSave, AtUartConfig const & config)
-    tx("AT+UART_DEF=%d,%d,%d,%d,%d", UART_ARG(&));
+    tx("AT+UART_DEF=", UART_ARG(&));
 $
 
 CMD(atUartSave, AtUartConfig * config)
     tx("AT+UART_DEF?");
-    tx("+UART_DEF:%d,%d,%d,%d,%d",   UART_ARG());
+    tx("+UART_DEF:", UART_ARG());
 $
 
 CMD(atRam, int32_t * bytes)
     tx("AT+SYSRAM?");
-    rx("+SYSRAM:%d", bytes, bytes);
+    rx("+SYSRAM:", bytes, bytes);
 $
 
 CMD(atSleepMode, bool mode)
-    tx("AT+SLEEP=%b", mode);
+    tx("AT+SLEEP=", mode);
 $
 
 CMD(atSleepMode, bool * mode)
-    tx("AT+SLEEP=%d", mode);
-    rx("+SLEEP:%b", mode);
+    tx("AT+SLEEP=", mode);
+    rx("+SLEEP:", mode);
 $
 
-CMD(atRfPower, RfPower const & config)
-    tx("AT+RFPOWER=%d%+d%+d%+d", 
-        config.wifiPower,
-        config.bleAdvertisingPower,
-        config.bleScanPower,
-        config.bleConntionPower
-    );
+CMD(atRfPower,
+    int32_t const & wifiPower, 
+    int32_t const & bleAdvertisingPower, 
+    int32_t const & bleScanPower, 
+    int32_t const & bleConntionPower)
+    tx("AT+RFPOWER=", wifiPower, bleAdvertisingPower, bleScanPower, bleConntionPower);
 $
 
-CMD(atRfPower, RfPower * config)
+CMD(atRfPower,
+    int32_t * wifiPower,
+    int32_t * bleAdvertisingPower,
+    int32_t * bleScanPower,
+    int32_t * bleConntionPower);
     tx("AT+RFPOWER?");
-    rx("+RFPOWER:%d,%d,%d,%d", 
-        config->wifiPower,
-        config->bleAdvertisingPower,
-        config->bleScanPower,
-        config->bleConntionPower
-    );
+    rx("+RFPOWER:", wifiPower, bleAdvertisingPower, bleScanPower, bleConntionPower);
 $
 
