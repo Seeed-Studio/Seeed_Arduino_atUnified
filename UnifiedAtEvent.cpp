@@ -1,31 +1,95 @@
 #define private public
+#include"Uart.h"
 #include"UnifiedAtEvent.h"
 #include"Utilities.h"
-#include"Seeed_Arduino_FreeRTOS.h"
+#include"UnifiedBackTask.h"
 
 #define T_US            1000000.0
 #define T_MS            1000.0
 #define ESP_BIT_RATE    115200
 #define ESP_BYTE_RATE   (1.0 * ESP_BIT_RATE / 11)
 #define MAX_DESIRED     50.0
-#define COST_US(bytes)  uint32_t(T_US / ESP_BYTE_RATE * (bytes))
-#define RT_SLEEP_US(us) vTaskDelay((us / portTICK_PERIOD_US));
+#define COST(bytes)     uint32_t(T_US / ESP_BYTE_RATE * (bytes))
 #define ei              else if
 #define es              else
-#define debug(...)      Serial.printf(__VA_ARGS__)
+#define self            (*(EspStateBar *)handle)
 
-#ifdef USE_AT_SERIAL
-    #define PIN_RX
-    auto & com = Serial;
-#elif defined USE_AT_SERIAL2
-    #define PIN_RX      PIN_SERIAL2_RX
-    auto & com = Serial2;
-#else
-    #define PIN_RX      PIN_SERIAL1_RX
-    auto & com = Serial1;
-#endif
+volatile bool change = false;
+
+void * memoryAlloc(size_t size){
+    void * ptr;
+    if (change == false){
+        if (ptr = malloc(size)){
+            return ptr;
+        }
+    }
+    Rtos::malloc(& ptr, size); 
+    return ptr;
+}
+
+void memoryFree(void * ptr){
+    if (change == false){
+        free(ptr);
+    }
+    else{
+        Rtos::free(ptr);
+    }
+}
+
+void * operator new(size_t size) {
+    return memoryAlloc(size);
+}
+
+void * operator new[](size_t size) {
+    return memoryAlloc(size);
+}
+
+void operator delete(void * ptr) {
+    memoryFree(ptr);
+}
+
+void operator delete[](void * ptr) {
+    memoryFree(ptr);
+}
+
+namespace{
+    #ifdef USE_ESP32_AT_SERIAL
+        #define PIN_RX
+        auto & com = Serial;
+    #elif defined USE_ESP32_AT_SERIAL2
+        #define PIN_RX
+        auto & com = Serial2;
+    #elif defined USE_ESP32_AT_SERIAL1
+        #define PIN_RX
+        auto & com = Serial1;
+    #endif
+    volatile bool       inIPD = false;
+}
 
 #ifdef PIN_RX
+
+    void sendSignal(void * serial, char chr){
+        if (serial != & com){
+            return;
+        }
+
+        static std::vector<char> tmp;
+        tmp.push_back(chr);
+        tmp.push_back('\0');
+        bool matchIPD = Text(& tmp[0]).startsWith("+IPD") && inIPD == false;
+
+        // if (chr == '\n' || matchIPD){
+        // debug("%c", chr);
+
+        if (chr == '\n' || (matchIPD && chr == ':')){
+            inIPD = true;
+            tmp.clear();
+            Rtos::giveFromISR(esp.semaWaitRx);
+        }
+        else{
+            tmp.pop_back();
+        }
+    }
     int EspStateBar::available(){
         return com.available();
     }
@@ -34,43 +98,42 @@
         return com.read();
     }
 
-    void atBegin() {
+    void EspStateBar::begin(){
         com.begin(ESP_BIT_RATE);
+    }
+
+    void EspStateBar::write(Text value){
+        com.print(value.c_str());
     }
 
     // default:
     // - wifi multi-connection
     // - close echo
     // - show IPD remote ip:port
-    void atDefault() {
-        auto skip = [](){
-            while (true){
-                auto line = com.readStringUntil('\n');
-                if (line.length() == 0){
-                    break;
-                }
-                debug("%s", line.c_str());
-            }
-        };
-        skip(); com.println("ATE0");
-        skip(); com.println("AT+CIPMUX=1");
-        skip(); com.println("AT+CIPDINFO=1");
-        skip();
-        
+    void EspStateBar::reset(){
+        wifi.reset();
     }
+#else
+    int EspStateBar::available(){
+        return -1;
+    }
+
+    int EspStateBar::read(){
+        return -1;
+    }
+
+    void EspStateBar::begin(){}
+
+    void EspStateBar::write(Text value){}
+
+    // default:
+    // - wifi multi-connection
+    // - close echo
+    // - show IPD remote ip:port
+    void EspStateBar::reset(){}
 #endif
 
-TaskHandle_t        espTask;
-TaskHandle_t        espFore;
 EspStateBar         esp;
-int                 itrRxPin = digitalPinToInterrupt(PIN_RX);
-
-void take(void * sema){
-    xSemaphoreTake((SemaphoreHandle_t)sema, portMAX_DELAY);
-}
-void give(void * sema) {
-    xSemaphoreGive((SemaphoreHandle_t)sema);
-}
 
 // EVENT --------------------------------------------------------------------
 void EspStateBar::Wifi::whenReceivePacket(int32_t id) {
@@ -92,54 +155,59 @@ void EspStateBar::Ping::whenRising(bool isTimeOut, uint32_t latency) {
 
 }
 void EspStateBar::whenReset() {
-    atDefault();
+    
 }
 
 struct TokenEventPair{
-    const char *                    token;
-    std::function<void(String &)>   invoke;
+    typedef std::function<void(EspStateBar &, Text &)> Invoke;
+    const char * token;
+    Invoke       invoke;
 };
 
 std::initializer_list<TokenEventPair> responesMap = { 
     { 
-        "ready", [](String &){
+        "ready", [](EspStateBar & esp, Text &){
             esp.reset();
             esp.whenReset();
         }
     }, { 
-        "WIFI CONNECTED", [](String &){
+        "WIFI CONNECTED", [](EspStateBar & esp, Text &){
             esp.wifi.whenStateChanged(WifiConnected);
         }
     }, { 
-        "WIFI GOT IP", [](String &){
+        "WIFI GOT IP", [](EspStateBar & esp, Text &){
             esp.wifi.whenStateChanged(WifiGotIp);
         }
     }, { 
-        "WIFI DISCONNECT", [](String &){
+        "WIFI DISCONNECT", [](EspStateBar & esp, Text &){
             esp.wifi.whenStateChanged(WifiDisconnect);
         }
     }, { 
-        "smartconfig connected wifi", [](String &){
+        "smartconfig connected wifi", [](EspStateBar & esp, Text &){
             esp.smart.whenRising(success);
         }
     }, {
-        "smartconfig connect fail", [](String &) {
+        "smartconfig connect fail", [](EspStateBar & esp, Text &) {
             esp.smart.whenRising(fail);
         }
     }, {
-        "OK", [](String &) {
+        "OK", [](EspStateBar & esp, Text &) {
+            // Rtos::queuePushBack(esp.semaWaitFlag, success);
             esp.flag = success;
-            give(esp.semaWaitFlag);
+            esp.semaWaitFlag = 1;
         }
     }, {
-        "ERROR", [](String &) {
+        "ERROR", [](EspStateBar & esp, Text &) {
+            // Rtos::queuePushBack(esp.semaWaitFlag, fail);
             esp.flag = fail;
-            give(esp.semaWaitFlag);
+            esp.semaWaitFlag = 1;
         }
     }, {
-        "+IPD", [](String & resp){
+        "+IPD", [](EspStateBar & esp, Text & resp){
             int32_t id;
             Ipd     ipd;
+
+            // +5 to skip "+IPD,"
             esp.rx(resp.c_str() + 5, & id, & ipd.length, & ipd.ip, & ipd.port);
             ipd.data = std::shared_ptr<uint8_t>(new uint8_t[ipd.length]);
 
@@ -148,7 +216,7 @@ std::initializer_list<TokenEventPair> responesMap = {
                     ipd.data.get()[i] = esp.read();
                 }
                 es{
-                    RT_SLEEP_US(COST_US(ipd.length - i));
+                    Rtos::delayus(COST(ipd.length - i));
                 }
             }
             esp.wifi.packet[id].push(ipd);
@@ -157,98 +225,97 @@ std::initializer_list<TokenEventPair> responesMap = {
     },
 };
 
-void atRxFalling() {
-    auto flag = pdFALSE;
-    detachInterrupt(itrRxPin);
-    xSemaphoreGiveFromISR((SemaphoreHandle_t)esp.semaWaitRx, &flag);
-    debug("start bit\n");
-}
-
-void atSetRxInterrupt() {
-    attachInterrupt(itrRxPin, atRxFalling, FALLING);
-}
-
-String EspStateBar::readUntil(char * token){
-    for(std::vector<char> buf;;){
+Text EspStateBar::readUntil(char * token){
+    char              c;
+    std::vector<char> buf;
+    while(true){
         while (available() <= 0){
-            RT_SLEEP_US(COST_US(MAX_DESIRED));
+            Rtos::take(semaWaitRx);
         }
-
-        char c = read();
+        c = read();
         buf.push_back(c);
-        debug("%c", c);
 
         if (strchr(token, c) != nullptr){
             buf.push_back(0);
-            return String(& buf.front());
+            return Text(& buf.front());
         }
     }
 }
 
 void EspStateBar::eventHandler(){
-    while(true){
-        while(!Serial);
-        take(semaWaitRx);
-        debug("wait\n");
-        RT_SLEEP_US(COST_US(MAX_DESIRED));
-        debug("wait\n");
-        while (true) {
-            String && resp = readUntil(':', '\n');
-            Serial.print(resp);
-            for (auto & i : responesMap) {
-                if (resp.startsWith(i.token)) {
-                    i.invoke(resp);
-                    resp = "";
-                }
-            }
-            if (resp.length()) {
-                analysis.invoke(resp);
-            }
-            if (available() <= 0) {
-                atSetRxInterrupt();
+    while (true) {
+        Text && resp = readUntil(':', '\n');
+        if (resp.length() == 0){
+            continue;
+        }
+
+        // first
+        for (auto & event : responesMap) {
+            if (resp.startsWith(event.token)) {
+                event.invoke(this[0], resp);
                 break;
             }
         }
+
+        // second analysis
+        analysis.invoke(resp);
     }
 }
 
-bool EspStateBar::waitFlag() {
-    take(semaWaitFlag);
+Result EspStateBar::waitFlag(uint32_t ms) {
+    // bool flag;
+    // Rtos::queueReceive(semaWaitFlag, & flag);
+    // return flag;
+    while (ms) {
+        Rtos::delayus(500); if (semaWaitFlag) break;
+        Rtos::delayus(500); if (semaWaitFlag) break;
+        if (~ms){
+            ms -= 1;
+        }
+        if (ms == 0){
+            return timeout;
+        }
+    }
+    // debug("exit\n");
+    semaWaitFlag = 0;
     return flag;
 }
 
-void listen(void *){
-    esp.eventHandler();
-}
-
-void foreground(void *) {
+void fore(void * handle) {
     extern void setup();
     extern void loop();
-    extern int  main();
-    atSetRxInterrupt();
-    Serial.begin(115200);
-    while(1){
-        while (Serial.available() > 0){
-            char c = Serial.read();
-            Serial1.print(c);
+    
+    self.begin();
+    tx("ATE0");         self.waitFlag();
+    tx("AT+CIPMUX=1");  self.waitFlag();
+    tx("AT+CIPDINFO=1");self.waitFlag();
+
+    while(true){
+        loop();
+        yield(); // yield run usb background task
+
+        if (serialEventRun) {
+            serialEventRun();
         }
-        RT_SLEEP_US(500);
     }
 }
 
+void back(void * handle){
+    self.eventHandler();
+}
 
-void espBegin(){
-    atBegin();
-    atDefault();
-    esp.semaWaitRx = xSemaphoreCreateCounting(2, 0);
-    esp.semaWaitFlag = xSemaphoreCreateCounting(2, 0);
-    xTaskCreate(listen, "ESP-BG", 512, NULL, tskIDLE_PRIORITY + 1, & espTask);
-    xTaskCreate(foreground, "ESP-FG", 1024, NULL, tskIDLE_PRIORITY + 1, & espFore);
-    vTaskStartScheduler();
+void EspStateBar::run(){
+    change = true;
+    // Rtos::createQueue(& semaWaitFlag, 2, sizeof(bool));
+    Rtos::createSemaphore(& semaWaitRx, 1);
+    // Rtos::createQueue(& analysis.handle, 5, analysis.itemSize);
+    Rtos::createThread(& taskBack, "ESP-BG", back, this, 1024, 1);
+    Rtos::createThread(& taskFore, "ESP-FG", fore, this, 1024, 1);
+    Rtos::scheduler();
 }
 
 //
-//void atWifiScanSubfunction(String current){
+//void atWifiScanSubfunction(Text current){
 //    auto & list = esp.wifi.apList;
 //    list.clear();
 //
