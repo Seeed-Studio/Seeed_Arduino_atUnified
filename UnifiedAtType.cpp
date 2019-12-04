@@ -1,9 +1,15 @@
 #include"UnifiedAtType.h"
 
 namespace std{
-    void __throw_bad_function_call(){}
-    void __throw_bad_alloc() {}
-    void __throw_length_error(char const*){}
+    void __throw_bad_function_call(){
+        debug("FUNC:ERROR\n");
+    }
+    void __throw_bad_alloc() {
+        debug("MEM:ERROR\n");
+    }
+    void __throw_length_error(char const*){
+        debug("LEN:ERROR\n");
+    }
 }
 bool parseInt(char ** p, char type, int32_t * v){
     typedef int(* match_t)(int);
@@ -41,7 +47,6 @@ bool parseNetCode(char ** p, char type, uint8_t * buf, size_t length){
         if (parseInt(p, type, & v) == fail){
             return fail;
         }
-
         buf[i] = int32_t(v);
 
         switch(p[0][0]){
@@ -94,36 +99,46 @@ bool parseDateTime(char ** p, DateTime * time){
     str += 4;
     time->dayOfWeek = dayOfWeek;
     time->month     = month;
-    parseInt(& str, 'd', & time->day   ); str += 1; // skip ' '
-    parseInt(& str, 'd', & time->hour  ); str += 1; // skip ':'
-    parseInt(& str, 'd', & time->minute); str += 1; // skip ':'
-    parseInt(& str, 'd', & time->second); str += 1; // skip ' '
-    parseInt(& str, 'd', & time->year  );
+    int32_t tmp;
+    parseInt(& str, 'd', & tmp); time->day    = tmp; str += 1; // skip ' '
+    parseInt(& str, 'd', & tmp); time->hour   = tmp; str += 1; // skip ':'
+    parseInt(& str, 'd', & tmp); time->minute = tmp; str += 1; // skip ':'
+    parseInt(& str, 'd', & tmp); time->second = tmp; str += 1; // skip ' '
+    parseInt(& str, 'd', & tmp); time->year   = tmp;
     p[0] = str;
     return success;
 }
 
-void rxMain(String & resp, Any * buf){
-    for(char * str = (char *)resp.c_str(), * end; buf->isEmpty() == false; buf += 1, str += 1){ // skip ,
+void rxMain(Text resp, Any * buf){
+    char * str = (char *)resp.c_str();
+    char * end;
+    if (str[0] == '('){
+        str += 1;
+    }
+    for(; buf->isEmpty() == false; buf += 1, str += 1){ // skip ,
         switch(buf->type){
         case Typei08: 
             int32_t i32;
             parseInt(& str, 'd', & i32); 
             buf->i08[0] = i32;
+            //debug("b:%d\n", buf->i08[0]);
             break;
         case Typei32: 
-            parseInt(& str, 'd', buf->i32); 
+            parseInt(& str, 'd', buf->i32);
+            //debug("i:%d\n", buf->i32[0]);
             break;
         case Typex32: 
             parseInt(& str, 'x', buf->i32); 
+            //debug("x:%d\n", buf->i32[0]);
             break;
         case Typestr: 
             if (str[0] == '\"') {
                 str += 1;
                 end = (char *)strchr(str, '\"');
                 end[0] = '\0';
-                buf->str[0] = str;
-                str = end;
+                buf->str[0] = Text(str);
+                str = end + 1;
+                //debug("[%s]\n", buf->str[0].c_str());
             }
             else {
                 buf->str[0] = str;
@@ -131,9 +146,11 @@ void rxMain(String & resp, Any * buf){
             break;
         case Typeip:
             parseNetCode(& str, 'd', buf->ip[0], 4);
+            // debug("ip:%d.%d.%d.%d\n", buf->ip[0][0], buf->ip[0][1], buf->ip[0][2], buf->ip[0][3]);
             break;
         case Typemac:
             parseNetCode(& str, 'x', buf->mac[0], 6);
+            // debug("mac:%02x:%02x:%02x:%02x:%02x:%02x\n", buf->mac[0][0], buf->mac[0][1], buf->mac[0][2], buf->mac[0][3], buf->mac[0][4], buf->mac[0][5]);
             break;
         case Typetime:
             parseDateTime(& str, buf->time);
@@ -143,7 +160,7 @@ void rxMain(String & resp, Any * buf){
     }
 }
 
-void txMain(String * resp, Any * buf){
+void txMain(Text * resp, Any * buf){
     char tmp[32];
     Ipv4 ip;
     Mac  mac;
