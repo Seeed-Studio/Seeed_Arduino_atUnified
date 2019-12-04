@@ -1,5 +1,7 @@
 #pragma once
 #include"UnifiedAtType.h"
+#include"UnifiedAtWifi.h"
+#include"UnifiedBackTask.h"
 #define MAX_PACKET_CHANNEL      5
 
 enum WifiState : uint8_t{
@@ -17,28 +19,61 @@ struct Ipd{
                     data;
 };
 
-
-typedef std::vector<int> ListAp;
-//typedef std::vector<WifiApItem> ListAp;
+typedef std::vector<WifiApItem> ListAp;
 typedef std::queue<Ipd> IpdQue;
 
 struct EspStateBar{
 private:
+    template<class first, class ... args>
+    static void setAny(Any * any, first a, args ... list){
+        any[0] = Any(a);
+        setAny(any + 1, list...);
+    }
+    static void setAny(Any * any){}
+
+    template<class ... args>
+    static Any * newAny(args ... list){
+        Any * ptr = new Any[sizeof...(args)];
+        setAny(ptr, list...);
+        return ptr;
+    }
+
+    struct AnalysisInvoke;
+    typedef std::function<void (AnalysisInvoke &, Text &, Any *)> Invoke;
+    typedef std::function<void ()> CallBack;
     struct AnalysisInvoke{
-        template<class ... args>
-        AnalysisInvoke(std::function<void (String &, Any *)> && func, args ... list) : 
-            func(func){
-                Any tmp[] = { list... };
-                for (int i = 0; i < sizeof...(args); i++){
-                    arg[i] = tmp[i];
-                }
-            }
-        void invoke(String & resp){
-            func(resp, arg);
+        AnalysisInvoke(){
+            arg = nullptr;
+            token = "";
         }
+
+        template<class ... args>
+        AnalysisInvoke(Invoke func, const char * token, CallBack const & callback, args ... list) : 
+            func(func), token(token), callback(callback){
+                arg = newAny(list...);
+            }
+        
+        void invoke(Text & resp){
+            if (func){
+                func(this[0], resp, arg);
+            }
+        }
+        void relase(){
+            if (arg){
+                delete [] arg; arg = nullptr;
+            }
+        }
+        const char *    token;
+        CallBack        callback;
     private:
-        std::function<void (String &, Any *)>  func;
-        Any                                    arg[10];
+        template<class first, class ... args> void set(first a, args ... list){
+            arg[0] = Any(a);
+            arg += 1;
+            set(list...);
+        }
+        void set(){}
+        Invoke          func;
+        Any        *    arg;
     };
 public:
     struct Wifi{
@@ -71,81 +106,118 @@ public:
         void whenRising(bool isTimeOut, uint32_t latency);
     } ping;
 
-    struct Analysis{
-        Analysis(){
-            reset();
-        }
-        void reset(){
-            while(que.empty() == false){
-                que.pop();
-            }
-        }
-        void push(AnalysisInvoke const & item){
-            que.push(item);
-        }
-        void pop(){
-            que.pop();
-        }
-        void invoke(String & resp){
-            if (que.size()) {
-                que.front().invoke(resp);
-            }
-        }
-    private:
-        std::queue<AnalysisInvoke> que;
-    } analysis;
+    // struct Analysis{
+    //     Analysis(){}
+    //     void reset(){
+    //         while(size()){
+    //             pop();
+    //         }
+    //     }
+    //     void push(AnalysisInvoke const & item){
+    //         Rtos::queueSend(handle, item);
+    //     }
+    //     uint32_t size(){
+    //         uint32_t size;
+    //         Rtos::queueSize(handle, & size);
+    //         return size;
+    //     }
+    //     void pop(){
+    //         AnalysisInvoke dummy;
+    //         Rtos::queueReceive(handle, & dummy);
+    //         dummy.relase();
+    //     }
+    //     void invoke(Text & resp){
+    //         AnalysisInvoke func;
+    //         Rtos::queuePeek(handle, & func);
+    //         func.invoke(resp);
+    //     }
+    //     static constexpr int itemSize = sizeof(AnalysisInvoke);
+    // private:
+    //     void * handle;
+    // } analysis;
 
-    void reset(){
-        wifi.reset();
-        analysis.reset();
-    }
+    AnalysisInvoke analysis;
+
+    void reset();
     void eventHandler();
     void whenReset();
-private:    
+private:
     template<class ... args>
-    String readUntil(char a, args ... list){
+    Text readUntil(char a, args ... list){
         char group[] = { a, list..., '\0' };
         return readUntil(group);
     }
-    String readUntil(char * token);
-    int read();
-    int available();
-    void writeLine(String value);
-
-    bool   flag;
-    void * semaWaitFlag;
+    Text readUntil(char * token);
+    int  read();
+    int  available();
+    void begin();
+    void write(Text value);
+    volatile Result flag;
+    volatile int 
+           semaWaitFlag;
     void * semaWaitRx;
+    void * rxQueue;
+    void * taskFore;
+    void * taskBack;
     friend struct Background;
+
+    #define TEMP_RX                                         \
+    size_t len = strlen(an.token);                          \
+    if (strncmp(resp.c_str(), an.token, len)){              \
+        return;                                             \
+    }                                                       \
+    Text v = readUntil('\n');                               \
+    rxMain(v, buf);                                         \
+
 public:
+    Result waitFlag(uint32_t ms = uint32_t(-1));
+    void run();
+
+    template<class ... args>
+    void rx(std::function<void ()> const & callback, const char * token, args ... list){
+        extern void rxMain(Text resp, Any * buf);
+        analysis = AnalysisInvoke{
+            [this](AnalysisInvoke & an, Text & resp, Any * buf){
+                TEMP_RX;
+                an.callback();
+            }, token, callback, list..., nullptr // nullptr as end of args
+        };
+    }
+
     template<class ... args>
     void rx(const char * token, args ... list){
-        void rxMain(String & resp, Any * buf);
-        analysis.push(AnalysisInvoke{
-            [&](String & resp, Any * buf){
-                if (resp.startsWith(token) == false){
-                    return;
-                }
-                auto && line = readUntil('\n');
-                rxMain(line, buf);
-                analysis.pop();
-            }, list..., nullptr // nullptr as end of args
-        });
+        rx([](){}, token, list...);
     }
-
-    bool waitFlag();
 
     template<class ... args>
-    void tx(const char * token, args const & ... list){
-        void txMain(String * resp, Any * buf);
-        String resp = token;
-        Any arg[] = { list..., nullptr }; // nullptr as the end of args.
-        txMain(resp, arg);
-        writeLine(resp);
+    void tx(const char * token, args ... list){
+        extern void txMain(Text * resp, Any * buf);
+        Text resp = token;
+        Any * arg = newAny(list..., nullptr);
+        txMain(& resp, arg);
+        write(resp);
+        delete [] arg;
     }
-
 };
 
 extern EspStateBar esp;
-void espBegin();
 
+template<class ... args>
+void rx(const char * token, args ... list){
+    esp.rx(token, list...);
+}
+
+template<class ... args>
+void rx(std::function<void ()> const & callback, const char * token, args ... list){
+    esp.rx(callback, token, list...);
+}
+
+template<class ... args>
+void tx(const char * token, args ... list){
+    esp.tx(token, list...);
+}
+
+inline Result waitFlag(uint32_t ms = uint32_t(-1)){
+    return esp.waitFlag(ms);
+}
 
