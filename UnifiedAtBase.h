@@ -2,18 +2,21 @@
 #include"UnifiedAtType.h"
 
 struct FirmwareInfo{
-    String atVersion;
-    String sdkVersion;
-    String compileTime;
-    String binVersion;
+    Text atVersion;
+    Text sdkVersion;
+    Text compileTime;
+    Text binVersion;
+    Text & operator [](size_t index){
+        return ((Text *)this)[index];
+    }
 };
 
 struct AtUartConfig {
-    int32_t  rate;
-    int32_t  databits;
-    int32_t  stopbits;
-    int32_t  parity;
-    int32_t  flowControl;
+    Ni32    rate;
+    Ni8     databits;
+    Ni8     stopbits;
+    Ni8     parity;
+    Ni8     flowControl;
 };
 
 bool atReset();
