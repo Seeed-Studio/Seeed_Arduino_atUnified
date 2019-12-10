@@ -23,10 +23,10 @@ bool parseInt(char ** p, char type, int32_t * v){
         end += 1;
     }
     if (sscanf(p[0], fmt, v) == 0){
-        return fail;
+        return Fail;
     }
     p[0] = end;
-    return success;
+    return Success;
 };
 
 // parse mac/ip
@@ -44,8 +44,8 @@ bool parseNetCode(char ** p, char type, uint8_t * buf, size_t length){
         p[0] += 1;
     }
     for (int32_t i = 0, v; i < length; i++){
-        if (parseInt(p, type, & v) == fail){
-            return fail;
+        if (parseInt(p, type, & v) == Fail){
+            return Fail;
         }
         buf[i] = int32_t(v);
 
@@ -62,6 +62,14 @@ bool parseNetCode(char ** p, char type, uint8_t * buf, size_t length){
 // Format:
 // Mon Dec 12 02:33:32 2016
 bool parseDateTime(char ** p, DateTime * time){
+    auto     skipEmpty = [](char ** strp){
+        char * str = strp[0];
+        while(str[0] == ' ' || str[0] == '\t'){
+            str++;
+        }
+        strp[0] = str;
+    };
+
     char *   str = p[0];
     auto     dayOfWeek = 
     !strncmp(str, "Sun", 3) ? Sun :
@@ -73,10 +81,11 @@ bool parseDateTime(char ** p, DateTime * time){
     !strncmp(str, "Sat", 3) ? Sat : NotDayOfWeek;
 
     if (dayOfWeek == NotDayOfWeek){
-        return fail;
+        return Fail;
     }
 
     str += 4;
+    skipEmpty(& str);
 
     auto month = 
     !strncmp(str, "Jan", 3) ? Jan :
@@ -93,10 +102,13 @@ bool parseDateTime(char ** p, DateTime * time){
     !strncmp(str, "Dec", 3) ? Dec : NotMonth;
 
     if (month == NotMonth){
-        return fail;
+        return Fail;
     }
 
+    //1 01:18:52 1970
+    //Thu Jan  1 01:18:52 1970
     str += 4;
+    skipEmpty(& str);
     time->dayOfWeek = dayOfWeek;
     time->month     = month;
     int32_t tmp;
@@ -106,22 +118,28 @@ bool parseDateTime(char ** p, DateTime * time){
     parseInt(& str, 'd', & tmp); time->second = tmp; str += 1; // skip ' '
     parseInt(& str, 'd', & tmp); time->year   = tmp;
     p[0] = str;
-    return success;
+    return Success;
 }
 
-void rxMain(Text resp, Any * buf){
-    char * str = (char *)resp.c_str();
-    char * end;
+size_t rxMain(Text resp, Any * buf){
+    char *  str = (char *)resp.c_str();
+    char *  end;
+    char    chr;
+    size_t  len;
+    int32_t i32;
+    size_t  c = 0;
+
     if (str[0] == '('){
         str += 1;
     }
-    for(; buf->isEmpty() == false; buf += 1, str += 1){ // skip ,
+
+    for(; buf->isEmpty() == false && str[0] != '\r' && str[0] != '\n'; buf += 1, str += 1, c++){ // skip ,
+        // debug("%d:%p:%s", buf->type, buf->str, str);
         switch(buf->type){
         case Typei08: 
-            int32_t i32;
             parseInt(& str, 'd', & i32); 
             buf->i08[0] = i32;
-            //debug("b:%d\n", buf->i08[0]);
+            // debug("b:%d\n", buf->i08[0]);
             break;
         case Typei32: 
             parseInt(& str, 'd', buf->i32);
@@ -135,10 +153,12 @@ void rxMain(Text resp, Any * buf){
             if (str[0] == '\"') {
                 str += 1;
                 end = (char *)strchr(str, '\"');
+                chr = end[0];
                 end[0] = '\0';
                 buf->str[0] = Text(str);
+                end[0] = chr;
                 str = end + 1;
-                //debug("[%s]\n", buf->str[0].c_str());
+                // debug("[%s]\n", buf->str[0].c_str());
             }
             else {
                 buf->str[0] = str;
@@ -155,13 +175,20 @@ void rxMain(Text resp, Any * buf){
         case Typetime:
             parseDateTime(& str, buf->time);
             break;
-        default: break;
+        case Typeskip:
+            len = strlen(buf->skip);
+            str += len;
+            break;
+        default: 
+            break;
         }
     }
+    return c;
 }
 
 void txMain(Text * resp, Any * buf){
     char tmp[32];
+    bool goon = true;
     Ipv4 ip;
     Mac  mac;
     while(buf->isEmpty() == false){ // maybe the first param of buf is empty
@@ -190,11 +217,11 @@ void txMain(Text * resp, Any * buf){
         }
         buf += 1;
 
-        if (buf->isEmpty() == false){
-            resp[0] += ",";
+        if (buf->isEmpty() || (buf->type == Typestr && buf->str[0] == nullptr)){
+            break;
         }
         else {
-            break;
+            resp[0] += ",";
         }
     }
     resp[0] += END_LINE;

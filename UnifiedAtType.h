@@ -1,13 +1,6 @@
 #pragma once
-#ifndef ARDUINO
-    namespace std{
-        void __throw_bad_function_call();
-        void __throw_bad_alloc();
-        void __throw_length_error(char const*);
-    }
-#endif
-
 #include<Arduino.h>
+#include<String.h>
 
 #ifdef max
     #pragma push(max)
@@ -33,10 +26,16 @@
 #include<stdio.h>
 #include<stdlib.h>
 
+// FOR ESP-LIB
+#define log_e(...)
+#define log_i(...)
+#define log_d(...)
+#define log_w(...)
 
-#define debug(...)      Serial.printf(__VA_ARGS__)
+// FOR SELF-DEBUG
+#define debug(...)      if (Serial) { Serial.printf(__VA_ARGS__); }
 #define CMD(name,...)   bool name(__VA_ARGS__) {
-#define $               return waitFlag(); }
+#define $               flush(); return waitFlag(); }
 #define END_LINE        "\r\n"
 #define ANY_INI(r,t)        \
 Any(r const & v){           \
@@ -49,8 +48,8 @@ Any(r const & v){           \
         tmp_ ## t = v;      \
     }                       \
 }                           \
-Any(r * v){                 \
-    if (v == nullref){      \
+Any(r const * v){           \
+    if (v == nullptr){      \
         t = nullptr;        \
     }                       \
     else {                  \
@@ -86,32 +85,23 @@ struct nullref_t{
     }
 };
 
+// this array is meet for hold static memory pointer.
 template<class type>
-struct nullable{
-    nullable() : 
-        isNull(true){
+struct Array{
+    Array(){
+        len = 0;
+        ptr = nullptr;
     }
-    nullable(type v) : 
-        isNull(false), value(v){
+    Array(type * ptr, size_t len) : ptr(ptr), len(len){}
+    type & operator [](size_t index){
+        return ptr[index];
     }
-    void operator= (type v){
-        isNull = false;
-        value = v;
+    size_t size(){
+        return len;
     }
-    operator type & (){
-        return value;
-    }
-    operator type * (){
-        if (isNull){
-            return nullptr;
-        }
-        return & value;
-    }
-    type * operator & (){
-        return this[0];
-    }
-    type value;
-    bool isNull;
+private:
+    size_t len;
+    type * ptr;
 };
 
 constexpr bool disable      = false;
@@ -119,13 +109,13 @@ constexpr bool enable       = true;
 constexpr nullref_t nullref = {};
 
 enum Result{
-    fail,
-    success,
-    timeout,
+    Fail,
+    Success,
+    Timeout,
 };
 
 enum TypeAny{
-    Typenull, Typei08, Typei32, Typex32, Typestr, Typeip, Typemac, Typetime,
+    Typenull, Typei08, Typei32, Typex32, Typestr, Typeip, Typemac, Typetime, Typeskip,
 };
 
 enum DayOfWeek{
@@ -133,7 +123,7 @@ enum DayOfWeek{
 };
 
 enum Month{
-    Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec, NotMonth
+    NotMonth, Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec
 };
 
 struct DateTime{
@@ -151,16 +141,17 @@ struct X32 { int32_t x; X32(int32_t x = 0) :x(x) {} };
 template<uint32_t length>
 struct NetCode{
     NetCode(){ isNull = true; }
-
-    template<class ... args>
-    NetCode(args ... list) {
-        auto items = { list... };
-        auto i = 0;
-        for (auto v : items) {
-            value[i] = uint8_t(v);
-            i += 1;
+    NetCode(const uint8_t * v){
+        for (size_t i = 0; i < length; i++){
+            value[i] = v[i];
         }
         isNull = false;
+    }
+
+    template<class ... args>
+    NetCode(uint8_t first, args ... list) {
+        uint8_t items[] = { first, list... };
+        this[0] = NetCode(items);
     }
     operator uint8_t * (){
         if (isNull){
@@ -168,19 +159,55 @@ struct NetCode{
         }
         return value;
     }
+    explicit operator char * (){
+        return (char *)(uint8_t *)this[0];
+    }
+    auto * operator &(){
+        isNull = false;
+        return this;
+    }
     bool    isNull;
 private:
     uint8_t value[length];
 };
 
-typedef NetCode<4> Ipv4;
-typedef NetCode<6> Mac;
-typedef nullable<int8_t>    ni8;
-typedef nullable<int32_t>   ni32;
-typedef nullable<bool>      nbool;
-typedef nullable<uint8_t>   nu8;
-typedef nullable<uint32_t>  nu32;
+template<class type>
+struct Nullable{
+    Nullable() : 
+        isNull(true){
+    }
+    Nullable(type v) : 
+        isNull(false), value(v){
+    }
+    void operator= (type v) {
+        isNull = false;
+        value = v;
+    }
+    operator type & () const {
+        return value;
+    }
+    operator type * () const {
+        if (isNull){
+            return nullptr;
+        }
+        return & value;
+    }
+    type * operator & () const {
+        isNull = false;
+        return this[0];
+    }
+    mutable type value;
+    mutable bool isNull;
+};
 
+typedef NetCode<4>              Ipv4;
+typedef NetCode<6>              Mac;
+typedef Nullable<int8_t>        Ni8;
+typedef Nullable<int32_t>       Ni32;
+typedef Nullable<bool>          nbool;
+typedef Nullable<uint8_t>       nu8;
+typedef Nullable<uint32_t>      nu32;
+typedef std::function<void()>   Event;
 
 struct Text{
     Text(){}
@@ -193,8 +220,11 @@ struct Text{
         data = std::shared_ptr<char>(p);
         strcpy(data.get(), value);
     }
-    const char * c_str(){
+    const char * c_str() const {
         return data.get();
+    }
+    operator String(){
+        return String(c_str());
     }
     void operator=(const char * value){
         data = Text(value).data;
@@ -208,19 +238,29 @@ struct Text{
     bool operator!=(decltype(nullptr) value){
         return data != nullptr;
     }
+    Text sub(size_t index){
+        if (index >= length()){
+            return Text();
+        }
+        return Text(data.get() + index);
+    }
     Text operator + (Text value){
-        size_t len = length() + value.length();
+        size_t lenA = length();
+        size_t lenB = value.length();
+        size_t len = lenA + lenB + 1; // 1 for '\0'
         Text tmp;
         auto p = new char[len];
         tmp.data = std::shared_ptr<char>(p);
 
         if (data != nullptr){
             strcpy(p, data.get());
-            p += length();
+            p += lenA;
         }
         if (value != nullptr){
             strcpy(p, value.data.get());
+            p += lenB;
         }
+        p[0] = '\0';
         return tmp;
     }
 
@@ -247,6 +287,9 @@ struct Text{
         }
         return strlen(data.get());
     }
+    bool startsWith(Text const & str){
+        return startsWith(str.c_str());
+    }
     bool startsWith(const char * str){
         if (data == nullptr){
             return false;
@@ -265,19 +308,24 @@ struct Any{
         str = nullptr;
         type = Typenull;
     }
+
     Any(decltype(nullptr)) {
         str = nullptr;
         type = Typenull;
     }
 
-    template<class type>
-    Any(nullable<type> * value) : 
-        Any((type *)value[0]){
+    Any(const char * skip) : 
+        skip(skip), type(Typeskip){
     }
-    
+
     template<class type>
-    Any(nullable<type> & value) : 
-        Any((type *)value){
+    Any(Nullable<type> const & v) : 
+        Any((const type *)v){
+    }
+
+    template<class type>
+    Any(Nullable<type> const * v) : 
+        Any(& v->value){
     }
 
     ANY_INI(Text,       str);
@@ -288,31 +336,41 @@ struct Any{
     ANY_INI(Ipv4,       ip);
     ANY_INI(Mac,        mac);
     ANY_INI(DateTime,   time);
+    #undef ANY_INI
 
     bool isEmpty() {
-        return Typenull == type;
+        return Typenull == type || str == nullptr;
     }
     union{
-        Text  *   str;
-        X32     *   x32;
-        int32_t *   i32;
-        int8_t  *   i08;
-        Ipv4    *   ip;
-        Mac     *   mac;
-        DateTime*   time;
+        Text        *   str;
+        X32         *   x32;
+        int32_t     *   i32;
+        int8_t      *   i08;
+        Ipv4        *   ip;
+        Mac         *   mac;
+        DateTime    *   time;
+        const char  *   skip;
     };
-    TypeAny         type;
+    TypeAny             type;
 private:
-    Text            tmp_str;
+    Text                tmp_str;
     union{
-        X32         tmp_x32;
-        int32_t     tmp_i32;
-        int8_t      tmp_i08;
-        Ipv4        tmp_ip;
-        Mac         tmp_mac;
-        DateTime    tmp_time;
+        X32             tmp_x32;
+        int32_t         tmp_i32;
+        int8_t          tmp_i08;
+        Ipv4            tmp_ip;
+        Mac             tmp_mac;
+        DateTime        tmp_time;
     };
 };
 
-#undef ANY_INI
+template<class a, class b>
+void copy(a * des, const b * src, size_t length){
+    for (size_t i = 0; i < length; i++){
+        des[i] = src[i];
+    }
+}
+
+void   txMain(Text * resp, Any * buf);
+size_t rxMain(Text resp, Any * buf);
 
