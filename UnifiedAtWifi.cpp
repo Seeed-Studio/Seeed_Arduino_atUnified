@@ -13,7 +13,7 @@
         (__VA_ARGS__ configure)->startIp,       \
         (__VA_ARGS__ configure)->endIp
 
-extern String readLine();
+extern Text readLine();
 
 // mode
 // - 0 : off FR
@@ -21,59 +21,85 @@ extern String readLine();
 // - 2 : softap mode
 // - 3 : both station and softap
 CMD(atWifiMode, int32_t mode)
-    tx("AT+CWMODE=%d", mode);
+    tx("AT+CWMODE=", mode);
 $
 
 CMD(atWifiMode, int32_t * mode)
     tx("AT+CWMODE?");
-    rx("+CWMODE:%d", mode);
+    rx("+CWMODE:", mode);
 $
 
-CMD(atWifiConnect, String const & ssid, String const & pwd, Mac bssid)
-    tx("AT+CWJAP=%s,%s%+m", ssid, pwd, bssid);
+CMD(atWifiConnect, Text const & ssid, Text const & pwd, Mac const & bssid)
+    tx("AT+CWJAP=", ssid, pwd, bssid);
 $
 
 CMD(atWifiConnect, WifiLinkedAp * token)
     tx("AT+CWJAP?");
-    rx("+CWJAP:%s,%s,%b,%b", token->ssid, token->bssid, token->channel, token->rssi);
+    rx("+CWJAP:", & token->ssid, & token->bssid, & token->channel, & token->rssi);
 $
 
-void atWifiScanSubfunction(String current);
+bool atWifiScan(Event whenScanFinished){
+    // aynsc need static item.
+    static WifiApItem item;
 
-void atWifiScan(){
-    tx("AT+CWLAP?");
+    // block if cmd not finished.
+    tx("AT+CWLAP"); // no '?'
+    rx("+CWLAP:", & item.ecn, & item.ssid, & item.rssi, & item.bssid, & item.channel);
+    
+    // set after
+    esp.wait = WaitWifiScan;
+    esp.wifi.whenScanFinished = whenScanFinished;
+    esp.wifi.apListEnd = esp.wifi.apList;
+    esp.analysis.whenResolutionOneLine = [&](){ 
+        esp.wifi.apListEnd[0] = item; 
+        esp.wifi.apListEnd += 1;
+    };
+    flush();
+    return Success;
 }
 
-// CMD(atWifiScan, std::vector<WifiApItem> & list)
-//     String current;
-//     atWifiScan();
-//     atWifiScanSubfunction(readLine());
-// $
-
-CMD(atWifiScanAsync, std::function<void ()> const & callback)
-    atWifiScan();
-    esp.wifi.whenFinishScan = callback;
-    return success;
-$
+bool atWifiScan(Array<WifiApItem> * list){
+    atWifiScan([](){});
+    auto r = waitFlag();
+    if (r == Success){
+        list[0] = Array<WifiApItem>(esp.wifi.apList, esp.wifi.apListEnd - esp.wifi.apList);
+    }
+    return r;
+}
 
 CMD(atWifiDisconnect)
     tx("AT+CWQAP");
 $
 
 CMD(atWifiApConfigure, WifiApConfigure const & configure)
-    tx("AT+CWSAP=%s,%s,%d,%d%+d%+d", CWSAP_ARG(&));
+    tx("AT+CWSAP=", CWSAP_ARG(&));
 $
 
 CMD(atWifiApConfigure, WifiApConfigure * configure)
     tx("AT+CWSAP?");
-    rx("+CWSAP:%s,%s,%d,%d,%d,%d", CWSAP_ARG());
+    rx("+CWSAP:", CWSAP_ARG());
 $
 
-CMD(atWifiUser, std::vector<WifiUser> & list)
-    WifiUser item;
-    for (tx("AT+CWLIF?"); rx("+CWLIF:%i,%m", item.ip, item.bssid) == success; ){
-        list.push_back(item);
+CMD(atWifiUser, Array<WifiUser> * list)
+    static WifiUser item;
+    tx("AT+CWLIF"); // no '?'
+
+    // rx ap user list
+    rx("+CWLIF:", & item.ip, & item.bssid);
+
+    // set after tx
+    esp.wifi.apUserEnd = esp.wifi.apUser;
+    esp.analysis.whenResolutionOneLine = [&](){ 
+        esp.wifi.apUserEnd[0] = item;
+        esp.wifi.apUserEnd += 1;
+    };
+
+    flush();
+    auto r = waitFlag();
+    if (r == Success){
+        list[0] = Array<WifiUser>(esp.wifi.apUser, esp.wifi.apUserEnd - esp.wifi.apUser);
     }
+    return r;
 $
 
 // mask
@@ -99,12 +125,12 @@ $
 // diable station and softap DHCP
 // AT+CWDHCP=0,2
 CMD(atDhcp, bool enable, int32_t mask)
-    tx("AT+CWDHCP=%b,%d", enable, mask);
+    tx("AT+CWDHCP=", enable, mask);
 $
 
 CMD(atDhcp, int32_t * mask)
     tx("AT+CWDHCP?");
-    rx("+CWDHCP:%d", mask);
+    rx("+CWDHCP:", mask);
 $
 
 CMD(atDhcpIpRangeClear)
@@ -112,23 +138,25 @@ CMD(atDhcpIpRangeClear)
 $
 
 CMD(atDhcpIpRange, IpRange const & configure)
-    tx("AT+CWDHCPS:1,%d,%i,%i", CWDHCPS_ARG(&));
+    tx("AT+CWDHCPS:1", CWDHCPS_ARG(&));
 $
 
 CMD(atDhcpIpRange, IpRange * configure)
     tx("AT+CWDHCPS?");
-    rx("+CWDHCPS:%d,%i,%i", CWDHCPS_ARG());
+    rx("+CWDHCPS:", CWDHCPS_ARG());
 $
 
 CMD(atApAutoConnect, bool enable)
-    tx("AT+CWAUTOCONN=%b", enable);
+    tx("AT+CWAUTOCONN=", enable);
 $
 
-CMD(atApStartSmart, int32_t type)
-    ta("AT+CWSTARTSMART");
-    type != leaveOut && 
-    ta("=%d", type);
-    tx(""); // END LINE
+CMD(atApStartSmart, int32_t const & type)
+    if (type == nullref){
+        tx("AT+CWSTARTSMART");
+    }
+    else{
+        tx("AT+CWSTARTSMART=", type);
+    }
 $
 
 CMD(atApStopSmart)
@@ -136,23 +164,23 @@ CMD(atApStopSmart)
 $
 
 CMD(atWps, bool enable)
-    tx("AT+WPS=%b", enable);
+    tx("AT+WPS=", enable);
 $
 
-CMD(atStationHostName, String const & name)
-    tx("AT+CWHOSTNAME=%s", name);
+CMD(atStationHostName, Text const & name)
+    tx("AT+CWHOSTNAME=", name);
 $
 
-CMD(atStationHostName, String * name)
+CMD(atStationHostName, Text * name)
     tx("AT+CWHOSTNAME?");
-    rx("+CWHOSTNAME:%s", name);
+    rx("+CWHOSTNAME:", name);
 $
 
 CMD(atMdnsDisable)
     tx("AT+MDNS=0");
 $
 
-CMD(atMdns, String hostName, String serviceName, int32_t port)
-    tx("AT+MDNS=1,%s,%s,%d", hostName, String("_") + serviceName, port);
+CMD(atMdns, Text const & hostName, Text const & serviceName, int32_t port)
+    tx("AT+MDNS=1,", hostName, Text("_") + serviceName, port);
 $
 
