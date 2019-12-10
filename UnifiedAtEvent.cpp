@@ -14,21 +14,21 @@
 #define es              else
 #define self            (*(EspStateBar *)handle)
 
-volatile bool change = false;
+volatile bool isUseRtosMemory = false;
 
 void * memoryAlloc(size_t size){
     void * ptr;
-    if (change == false){
+    if (isUseRtosMemory == false){
         if (ptr = malloc(size)){
             return ptr;
         }
     }
-    Rtos::malloc(& ptr, size); 
+    Rtos::malloc(& ptr, size);
     return ptr;
 }
 
 void memoryFree(void * ptr){
-    if (change == false){
+    if (isUseRtosMemory == false){
         free(ptr);
     }
     else{
@@ -63,33 +63,27 @@ namespace{
         #define PIN_RX
         auto & com = Serial1;
     #endif
-    volatile bool       inIPD = false;
+    volatile bool ipdMode = false;
 }
 
 #ifdef PIN_RX
 
-    void sendSignal(void * serial, char chr){
-        if (serial != & com){
-            return;
-        }
+    // void sendSignal(void * serial, char chr){
+    //     if (serial != & com){
+    //         return;
+    //     }
+    //     // debug("%c", chr);
+    //     // static uint64_t word = 0;
+    //     // uint64_t want = '+' << 32 | 'I' << 24 | 'P' << 16 | 'D' << 8 | ':';
+    //     // auto flag = (want & word) == want && ipdMode == false;
+    //     // word = word << 8 | chr;
+    //     // Rtos::giveFromISR(esp.semaWaitRx);
+    //     // com.rxBuffer.clear();
+    //     // uint32_t size;
+    //     // Rtos::queueSize(esp.rxQueue, & size);
+    //     // Rtos::queueSendFromISR(esp.rxQueue, chr);
+    // }
 
-        static std::vector<char> tmp;
-        tmp.push_back(chr);
-        tmp.push_back('\0');
-        bool matchIPD = Text(& tmp[0]).startsWith("+IPD") && inIPD == false;
-
-        // if (chr == '\n' || matchIPD){
-        // debug("%c", chr);
-
-        if (chr == '\n' || (matchIPD && chr == ':')){
-            inIPD = true;
-            tmp.clear();
-            Rtos::giveFromISR(esp.semaWaitRx);
-        }
-        else{
-            tmp.pop_back();
-        }
-    }
     int EspStateBar::available(){
         return com.available();
     }
@@ -106,57 +100,29 @@ namespace{
         com.print(value.c_str());
     }
 
+    void EspStateBar::txBin(uint8_t const * buffer, size_t length){
+        com.write(buffer, length);
+    }
+
     // default:
     // - wifi multi-connection
     // - close echo
     // - show IPD remote ip:port
     void EspStateBar::reset(){
         wifi.reset();
+        tx("ATE0");          flush(); waitFlag();
+        tx("AT+CIPMUX=1");   flush(); waitFlag();
+        tx("AT+CIPDINFO=1"); flush(); waitFlag();
     }
 #else
-    int EspStateBar::available(){
-        return -1;
-    }
-
-    int EspStateBar::read(){
-        return -1;
-    }
-
+    int EspStateBar::available(){ return -1; }
+    int EspStateBar::read(){ return -1; }
     void EspStateBar::begin(){}
-
     void EspStateBar::write(Text value){}
-
-    // default:
-    // - wifi multi-connection
-    // - close echo
-    // - show IPD remote ip:port
     void EspStateBar::reset(){}
 #endif
 
 EspStateBar         esp;
-
-// EVENT --------------------------------------------------------------------
-void EspStateBar::Wifi::whenReceivePacket(int32_t id) {
-
-}
-void EspStateBar::Wifi::whenScanFinished(ListAp & list) {
-
-}
-void EspStateBar::Wifi::whenScanFailed(int32_t failCode) {
-
-}
-void EspStateBar::Wifi::whenStateChanged(WifiState state) {
-
-}
-void EspStateBar::Smart::whenRising(bool isSuccess) {
-
-}
-void EspStateBar::Ping::whenRising(bool isTimeOut, uint32_t latency) {
-
-}
-void EspStateBar::whenReset() {
-    
-}
 
 struct TokenEventPair{
     typedef std::function<void(EspStateBar &, Text &)> Invoke;
@@ -172,35 +138,48 @@ std::initializer_list<TokenEventPair> responesMap = {
         }
     }, { 
         "WIFI CONNECTED", [](EspStateBar & esp, Text &){
-            esp.wifi.whenStateChanged(WifiConnected);
+            esp.wifi.state = WifiConnected;
+            esp.wifi.whenStateChanged();
         }
     }, { 
         "WIFI GOT IP", [](EspStateBar & esp, Text &){
-            esp.wifi.whenStateChanged(WifiGotIp);
+            esp.wifi.state = WifiGotIp;
+            esp.wifi.whenStateChanged();
         }
     }, { 
         "WIFI DISCONNECT", [](EspStateBar & esp, Text &){
-            esp.wifi.whenStateChanged(WifiDisconnect);
+            esp.wifi.state = WifiDisconnect;
+            esp.wifi.whenStateChanged();
         }
     }, { 
         "smartconfig connected wifi", [](EspStateBar & esp, Text &){
-            esp.smart.whenRising(success);
+            esp.smart.state = Success;
+            esp.smart.whenRising();
         }
     }, {
-        "smartconfig connect fail", [](EspStateBar & esp, Text &) {
-            esp.smart.whenRising(fail);
+        "smartconfig connect Fail", [](EspStateBar & esp, Text &) {
+            esp.smart.state = Fail;
+            esp.smart.whenRising();
         }
     }, {
         "OK", [](EspStateBar & esp, Text &) {
-            // Rtos::queuePushBack(esp.semaWaitFlag, success);
-            esp.flag = success;
-            esp.semaWaitFlag = 1;
+            if (esp.wait == WaitWifiScan){
+                esp.wifi.whenScanFinished();
+            }
+            esp.wait = WaitNothing;
+            esp.flag = Success;
+            Rtos::give(esp.semaWaitCmd); // for waitFlag
+            Rtos::give(esp.semaWaitCmd); // for tx
         }
     }, {
         "ERROR", [](EspStateBar & esp, Text &) {
-            // Rtos::queuePushBack(esp.semaWaitFlag, fail);
-            esp.flag = fail;
-            esp.semaWaitFlag = 1;
+            if (esp.wait == WaitWifiScan){
+                esp.wifi.whenScanFailed();
+            }
+            esp.wait = WaitNothing;
+            esp.flag = Fail;
+            Rtos::give(esp.semaWaitCmd); // for waitFlag
+            Rtos::give(esp.semaWaitCmd); // for tx
         }
     }, {
         "+IPD", [](EspStateBar & esp, Text & resp){
@@ -210,6 +189,7 @@ std::initializer_list<TokenEventPair> responesMap = {
             // +5 to skip "+IPD,"
             esp.rx(resp.c_str() + 5, & id, & ipd.length, & ipd.ip, & ipd.port);
             ipd.data = std::shared_ptr<uint8_t>(new uint8_t[ipd.length]);
+            ipd.i = 0;
 
             for (int32_t i = 0; i < ipd.length; i++){
                 if (esp.available()){
@@ -219,24 +199,28 @@ std::initializer_list<TokenEventPair> responesMap = {
                     Rtos::delayus(COST(ipd.length - i));
                 }
             }
+            ipdMode = false;
             esp.wifi.packet[id].push(ipd);
-            esp.wifi.whenReceivePacket(id);
+            esp.wifi.packId = id;
+            esp.wifi.whenReceivePacket();
         }
     },
 };
 
 Text EspStateBar::readUntil(char * token){
-    char              c;
     std::vector<char> buf;
+    char        c;
     while(true){
         while (available() <= 0){
-            Rtos::take(semaWaitRx);
+            Rtos::delayms(1);
         }
+
         c = read();
         buf.push_back(c);
+        // debug("%c", c);
 
         if (strchr(token, c) != nullptr){
-            buf.push_back(0);
+            buf.push_back('\0');
             return Text(& buf.front());
         }
     }
@@ -263,58 +247,43 @@ void EspStateBar::eventHandler(){
 }
 
 Result EspStateBar::waitFlag(uint32_t ms) {
-    // bool flag;
-    // Rtos::queueReceive(semaWaitFlag, & flag);
-    // return flag;
-    while (ms) {
-        Rtos::delayus(500); if (semaWaitFlag) break;
-        Rtos::delayus(500); if (semaWaitFlag) break;
-        if (~ms){
-            ms -= 1;
-        }
-        if (ms == 0){
-            return timeout;
-        }
-    }
-    // debug("exit\n");
-    semaWaitFlag = 0;
+    Rtos::take(semaWaitCmd, Rtos::msToTicks(ms));
     return flag;
 }
 
+// setup and loop code block
+extern void body();
+
+// FREE RTOS IDLE function
+extern "C" void vApplicationIdleHook(){}
+
+// ESP-LIB function
+extern bool __attribute__((weak)) _start_network_event_task(){}
+
 void fore(void * handle) {
-    extern void setup();
-    extern void loop();
-    
+    _start_network_event_task();
     self.begin();
-    tx("ATE0");         self.waitFlag();
-    tx("AT+CIPMUX=1");  self.waitFlag();
-    tx("AT+CIPDINFO=1");self.waitFlag();
-
-    while(true){
-        loop();
-        yield(); // yield run usb background task
-
-        if (serialEventRun) {
-            serialEventRun();
-        }
-    }
+    self.reset();
+    body();
 }
 
 void back(void * handle){
     self.eventHandler();
 }
 
+void espAtShell(){
+    esp.run();
+    while(1);
+}
+
 void EspStateBar::run(){
-    change = true;
-    // Rtos::createQueue(& semaWaitFlag, 2, sizeof(bool));
-    Rtos::createSemaphore(& semaWaitRx, 1);
-    // Rtos::createQueue(& analysis.handle, 5, analysis.itemSize);
-    Rtos::createThread(& taskBack, "ESP-BG", back, this, 1024, 1);
-    Rtos::createThread(& taskFore, "ESP-FG", fore, this, 1024, 1);
+    isUseRtosMemory = true;
+    Rtos::createSemaphore(& semaWaitCmd, 2 /*max*/, 1 /*for send first cmd.*/);
+    Rtos::createThread(& taskBack, "ESP-BG", back, this, 1024, 1 /*priority*/);
+    Rtos::createThread(& taskFore, "ESP-FG", fore, this, 2048, 1);
     Rtos::scheduler();
 }
 
-//
 //void atWifiScanSubfunction(Text current){
 //    auto & list = esp.wifi.apList;
 //    list.clear();
