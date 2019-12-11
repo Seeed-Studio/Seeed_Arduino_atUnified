@@ -1,6 +1,8 @@
 #pragma once
 #include"UnifiedAtType.h"
 
+#define leaveOut (-1)
+
 struct BleScanMethod{
     // - 0 : passive scan
     // - 1 : active scan

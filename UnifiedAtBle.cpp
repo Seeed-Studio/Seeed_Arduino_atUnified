@@ -1,5 +1,7 @@
-#include"UnifiedAtBle.h"
+#include "UnifiedAtBle.h"
+#include "UnifiedAtEvent.h"
 
+#if 0
 // NOTICE:
 // The BLE commands and the UART-Wi-Fi passthrough mode cannot be used together, 
 // so before BLE initialization, please ensure that the UART-Wi-Fi passthrough mode 
@@ -271,3 +273,4 @@ $
 CMD(atBleCharacteristicsNotifies)
 $
 
+#endif

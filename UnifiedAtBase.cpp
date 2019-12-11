@@ -1,4 +1,5 @@
-#include"UnifiedAtBase.h"
+#include "UnifiedAtBase.h"
+#include "UnifiedAtEvent.h"
 
 #define UART_ARG(...)   (__VA_ARGS__ config)->rate,                 \
                         (__VA_ARGS__ config)->databits,             \
@@ -24,7 +25,7 @@ $
 
 CMD(atDeepSleep, int32_t ms)
     tx("AT+GSLP=", ms);
-    return success; // no response, return directly
+    return Success; // no response, return directly
 $
 
 CMD(atUartTemp, AtUartConfig const & config)
