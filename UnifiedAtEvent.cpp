@@ -1,8 +1,8 @@
 #define private public
-#include"Uart.h"
-#include"UnifiedAtEvent.h"
-#include"Utilities.h"
-#include"UnifiedBackTask.h"
+#include "Uart.h"
+#include "UnifiedAtEvent.h"
+#include "Utilities.h"
+#include "UnifiedBackTask.h"
 
 #define T_US            1000000.0
 #define T_MS            1000.0
@@ -130,28 +130,28 @@ struct TokenEventPair{
     Invoke       invoke;
 };
 
-std::initializer_list<TokenEventPair> responesMap = { 
-    { 
+std::initializer_list<TokenEventPair> responesMap = {
+    {
         "ready", [](EspStateBar & esp, Text &){
             esp.reset();
             esp.whenReset();
         }
-    }, { 
+    }, {
         "WIFI CONNECTED", [](EspStateBar & esp, Text &){
             esp.wifi.state = WifiConnected;
             esp.wifi.whenStateChanged();
         }
-    }, { 
+    }, {
         "WIFI GOT IP", [](EspStateBar & esp, Text &){
             esp.wifi.state = WifiGotIp;
             esp.wifi.whenStateChanged();
         }
-    }, { 
+    }, {
         "WIFI DISCONNECT", [](EspStateBar & esp, Text &){
             esp.wifi.state = WifiDisconnect;
             esp.wifi.whenStateChanged();
         }
-    }, { 
+    }, {
         "smartconfig connected wifi", [](EspStateBar & esp, Text &){
             esp.smart.state = Success;
             esp.smart.whenRising();
@@ -209,7 +209,8 @@ std::initializer_list<TokenEventPair> responesMap = {
 
 Text EspStateBar::readUntil(char * token){
     std::vector<char> buf;
-    char        c;
+    char c;
+
     while(true){
         while (available() <= 0){
             Rtos::delayms(1);
@@ -252,7 +253,7 @@ Result EspStateBar::waitFlag(uint32_t ms) {
 }
 
 // setup and loop code block
-extern void body();
+extern void _real_body();
 
 // FREE RTOS IDLE function
 extern "C" void vApplicationIdleHook(){}
@@ -264,14 +265,14 @@ void fore(void * handle) {
     _start_network_event_task();
     self.begin();
     self.reset();
-    body();
+    _real_body();
 }
 
 void back(void * handle){
     self.eventHandler();
 }
 
-void espAtShell(){
+void _wrap_body(){
     esp.run();
     while(1);
 }
@@ -313,7 +314,7 @@ void EspStateBar::run(){
 //        p = line + lastIndexOf(line, ',', 3);
 //
 //        sscanf(line, "+CWLAP:" "(%d,", & ecn);
-//        sscanf(p + 1, "%d,\"%x:%x:%x:%x:%x:%x\",%d", 
+//        sscanf(p + 1, "%d,\"%x:%x:%x:%x:%x:%x\",%d",
 //            & rssi,
 //            & mac[0],
 //            & mac[1],

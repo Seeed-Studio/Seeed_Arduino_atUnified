@@ -39,7 +39,7 @@ private:
                 func(resp, arg);
             }
         }
-        
+
         template<class first, class ... args>
         void setArg(first const & a, args const & ... list){
             set(arg, a, list...);
@@ -170,7 +170,7 @@ public:
         analysis.token[analysis.i] = nullptr;
         analysis.i = 0;
         analysis.arg = analysis.argList;
-        debug("%s", cmd.c_str());
+        debug(">%s", cmd.c_str());
         write(cmd);
     }
 

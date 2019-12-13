@@ -26,12 +26,6 @@
 #include<stdio.h>
 #include<stdlib.h>
 
-// FOR ESP-LIB
-#define log_e(...)
-#define log_i(...)
-#define log_d(...)
-#define log_w(...)
-
 // FOR SELF-DEBUG
 #define debug(...)      if (Serial) { Serial.printf(__VA_ARGS__); }
 #define CMD(name,...)   bool name(__VA_ARGS__) {

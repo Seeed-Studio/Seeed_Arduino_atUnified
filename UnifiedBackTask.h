@@ -1,8 +1,14 @@
+
+
+// Select only one port
+#define USE_ESP32_AT_SERIAL1	1
+//#define USE_ESP32_AT_SERIAL2	1
+
 #pragma once
 #if defined USE_ESP32_AT_SERIAL1
     #include"Arduino.h"
     #include"Seeed_Arduino_FreeRTOS.h"
-    
+
     struct Rtos{
         static uint32_t msToTicks(uint32_t ms){
             return ((ms * 1000) / portTICK_PERIOD_US);
@@ -18,15 +24,9 @@
         }
         template<class func>
         static void loopWait(func const & call, uint32_t ms = -1){
-            while (ms) {
+            while (ms--) {
                 Rtos::delayus(500); if (call()) break;
                 Rtos::delayus(500); if (call()) break;
-                if (~ms){
-                    ms -= 1;
-                }
-                if (ms == 0){
-                    return;
-                }
             }
         }
         static void delayus(uint32_t us){
