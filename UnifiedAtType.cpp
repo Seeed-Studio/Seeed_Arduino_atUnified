@@ -193,6 +193,7 @@ void txMain(Text * resp, Any * buf){
     Mac  mac;
 
     while(buf->isEmpty() == false){ // maybe the first param of buf is empty
+        // debug("buf type %d\r\n", buf->type);
         switch(buf->type){
         case Typei08: 
         case Typei32: 

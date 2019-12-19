@@ -131,12 +131,6 @@ public:
     static void doNothing(){}
 
     template<class ... args>
-    Text readUntil(char a, args ... list){
-        char group[] = { a, list..., '\0' };
-        return readUntil(group);
-    }
-
-    template<class ... args>
     void rx(std::function<void (Text &, Any *)> const & token, args const & ... list){
         analysis.func = token;
         analysis.set(list..., nullptr);
@@ -148,22 +142,14 @@ public:
         analysis.token[analysis.i++] = token;
 
         analysis.func = [this](Text & resp, Any * arg){
-            auto isLast = analysis.token[analysis.i + 1] == nullptr;
-            auto token = isLast ?
-                analysis.token[analysis.i] :
-                analysis.token[analysis.i++];
-            auto argOffset = 0;
+            auto token = analysis.token[analysis.i++];
+            auto arg_skip = 0;
 
             if (resp.startsWith(token)){
-                auto && v = readUntil('\n');
-                argOffset = rxMain(v, analysis.arg);
+                auto && v = readUntil("\n");
+                arg_skip = rxMain(v, analysis.arg);
+                analysis.arg += arg_skip;
                 analysis.whenResolutionOneLine();
-                // debug("> %s\n", analysis.arg->str->c_str());
-            }
-
-            if (isLast == false){
-                debug("LATS %d\n", argOffset);
-                analysis.arg += argOffset;
             }
         };
 
@@ -171,19 +157,22 @@ public:
         analysis.arg += sizeof...(args);
     }
 
-    void flush(){
-        analysis.token[analysis.i] = nullptr;
+    void resetArg() {
         analysis.i = 0;
         analysis.arg = analysis.argList;
-        debug(">%s", cmd.c_str());
+    }
+
+    void flush(){
+        analysis.token[analysis.i] = nullptr;
+        resetArg();
+        // debug(">%s", cmd.c_str());
         write(cmd);
     }
 
     template<class ... args>
     void tx(const char * token, args const & ... list){
         Rtos::take(semaWaitCmd);
-        analysis.i = 0;
-        analysis.arg = analysis.argList;
+        resetArg();
         analysis.whenResolutionOneLine = EspStateBar::doNothing;
         analysis.setArg(list..., nullptr);
         flag = Timeout;
@@ -235,10 +224,5 @@ inline Result waitFlag(uint32_t ms = uint32_t(-1)){
 
 inline void txBin(uint8_t const * buffer, size_t length){
     esp.txBin(buffer, length);
-}
-
-template<class ... args>
-Text readUntil(char a, args const & ... list){
-    return esp.readUntil(a, list...);
 }
 

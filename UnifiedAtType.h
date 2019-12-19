@@ -2,6 +2,12 @@
 #include<Arduino.h>
 #include<String.h>
 
+/*
+// Serial2 as terminal are stable than SerialUSB
+#undef Serial
+#define Serial Serial2
+*/
+
 #ifdef max
     #pragma push(max)
     #pragma push(min)

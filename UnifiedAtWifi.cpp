@@ -53,14 +53,16 @@ bool atWifiScan(Event whenScanFinished){
     esp.analysis.whenResolutionOneLine = [&](){ 
         esp.wifi.apListEnd[0] = item; 
         esp.wifi.apListEnd += 1;
+        esp.resetArg();
     };
     flush();
-    return Success;
+    auto r = waitFlag();
+    esp.analysis.whenResolutionOneLine = [&]() {};
+    return r;
 }
 
 bool atWifiScan(Array<WifiApItem> * list){
-    atWifiScan([](){});
-    auto r = waitFlag();
+    auto r = atWifiScan([](){});
     if (r == Success){
         list[0] = Array<WifiApItem>(esp.wifi.apList, esp.wifi.apListEnd - esp.wifi.apList);
     }

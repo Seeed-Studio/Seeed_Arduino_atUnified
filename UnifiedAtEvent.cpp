@@ -226,7 +226,7 @@ Text EspStateBar::readUntil(char * token){
 
 void EspStateBar::eventHandler(){
     while (true) {
-        Text && resp = readUntil(':', '\n');
+        Text && resp = readUntil(":\n");
         if (resp.length() == 0){
             continue;
         }
@@ -240,6 +240,7 @@ void EspStateBar::eventHandler(){
         }
 
         // second analysis
+        // register with esp.rx()
         analysis.invoke(resp);
     }
 }
