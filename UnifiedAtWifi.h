@@ -3,16 +3,13 @@
 
 // when current esp32 as station
 // this structure is a connected ap item base infomation. 
-struct WifiLinkedAp{
+struct WifiLinkedAp {
     Text    ssid;
+    Text    password;
     Mac     bssid;
+    bool    bssid_set;
     Ni8     channel;
     Ni8     rssi;
-    void useAll(){
-        bssid.isNull = false;
-        channel.isNull = false;
-        rssi.isNull = false;
-    }
 };
 
 // when current esp32 as station

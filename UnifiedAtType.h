@@ -62,17 +62,17 @@ struct nullref_t{
     friend bool operator == (type const & a, nullref_t b) {
         return & a == nullptr;
     }
-    
+
     template<class type>
     friend bool operator == (nullref_t b, type const & a) {
         return & a == nullptr;
     }
-    
+
     template<class type>
     friend bool operator != (type const & a, nullref_t b) {
         return & a != nullptr;
     }
-    
+
     template<class type>
     friend bool operator != (nullref_t b, type const & a) {
         return & a != nullptr;
@@ -156,6 +156,9 @@ struct NetCode{
     explicit operator char * (){
         return (char *)(uint8_t *)this[0];
     }
+    bool operator == (const NetCode& rhs) const{
+        return !memcmp(value, rhs.value, length);
+    }
     auto * operator &(){
         isNull = false;
         return this;
@@ -203,7 +206,7 @@ typedef Nullable<uint8_t>       nu8;
 typedef Nullable<uint32_t>      nu32;
 typedef std::function<void()>   Event;
 
-struct Text{
+struct Text {
     Text(){}
     Text(char value) {
         char tmp [] = { value, '\0' };
@@ -263,7 +266,7 @@ struct Text{
         this[0] = this[0] + Text(value);
         return this[0];
     }
-    bool operator == (Text value){
+    bool operator == (Text value) const{
         if (value.data == nullptr){
             return data == nullptr;
         }

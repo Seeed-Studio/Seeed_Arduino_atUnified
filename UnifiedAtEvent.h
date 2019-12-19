@@ -33,6 +33,8 @@ typedef std::queue<Ipd>         IpdQue;
 struct EspStateBar{
 private:
     typedef std::function<void (Text &, Any *)> Invoke;
+
+
     struct AnalysisInvoke{
         void invoke(Text & resp){
             if (func){
@@ -44,16 +46,15 @@ private:
         void setArg(first const & a, args const & ... list){
             set(arg, a, list...);
         }
-        typedef const char * text;
         Event           whenResolutionOneLine;
 
     private:
         friend EspStateBar;
-        uint32_t        i;
-        text            token[16];
-        Invoke          func;
-        Any      *      arg;
-        Any             argList[16];
+        uint32_t     i;
+        const char*  token[16];
+        Invoke       func;
+        Any *        arg;
+        Any          argList[16];
 
         template<class first, class ... args>
         static void set(Any * any, first const & a, args const & ... list){
@@ -62,6 +63,8 @@ private:
         }
         static void set(Any * any){}
     };
+
+
 public:
     struct Wifi{
         typedef TransmissionLink TranLink;
@@ -132,7 +135,7 @@ public:
         char group[] = { a, list..., '\0' };
         return readUntil(group);
     }
-    
+
     template<class ... args>
     void rx(std::function<void (Text &, Any *)> const & token, args const & ... list){
         analysis.func = token;
@@ -143,6 +146,7 @@ public:
     template<class ... args>
     void rx(const char * token, args const & ... list){
         analysis.token[analysis.i++] = token;
+
         analysis.func = [this](Text & resp, Any * arg){
             auto isLast = analysis.token[analysis.i + 1] == nullptr;
             auto token = isLast ?
@@ -162,6 +166,7 @@ public:
                 analysis.arg += argOffset;
             }
         };
+
         analysis.setArg(list..., nullptr);
         analysis.arg += sizeof...(args);
     }
@@ -189,16 +194,15 @@ public:
     void txBin(uint8_t const * buffer, size_t length);
 private:
     Text readUntil(char * token);
-    int  read();
-    int  available();
+
+    /* Com operations */
     void begin();
+    int  available();
+    int  read();
     void write(Text value);
 
-    volatile Result 
-            flag;
-    Text    cmd;
-    volatile bool 
-            isCmdFinished;
+    volatile Result flag;
+    Text             cmd;
     void *  semaWaitCmd;
     void *  taskFore;
     void *  taskBack;

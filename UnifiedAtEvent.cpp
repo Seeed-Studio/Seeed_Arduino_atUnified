@@ -10,8 +10,6 @@
 #define ESP_BYTE_RATE   (1.0 * ESP_BIT_RATE / 11)
 #define MAX_DESIRED     50.0
 #define COST(bytes)     uint32_t(T_US / ESP_BYTE_RATE * (bytes))
-#define ei              else if
-#define es              else
 #define self            (*(EspStateBar *)handle)
 
 volatile bool isUseRtosMemory = false;
@@ -194,8 +192,7 @@ std::initializer_list<TokenEventPair> responesMap = {
             for (int32_t i = 0; i < ipd.length; i++){
                 if (esp.available()){
                     ipd.data.get()[i] = esp.read();
-                }
-                es{
+                } else {
                     Rtos::delayus(COST(ipd.length - i));
                 }
             }
@@ -218,10 +215,10 @@ Text EspStateBar::readUntil(char * token){
 
         c = read();
         buf.push_back(c);
-        // debug("%c", c);
 
         if (strchr(token, c) != nullptr){
             buf.push_back('\0');
+            // debug("#%s", &buf.front());
             return Text(& buf.front());
         }
     }

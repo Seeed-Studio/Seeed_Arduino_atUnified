@@ -11,6 +11,7 @@ namespace std{
         debug("LEN:ERROR\n");
     }
 }
+
 bool parseInt(char ** p, char type, int32_t * v){
     typedef int(* match_t)(int);
     auto end = p[0];
@@ -188,9 +189,9 @@ size_t rxMain(Text resp, Any * buf){
 
 void txMain(Text * resp, Any * buf){
     char tmp[32];
-    bool goon = true;
     Ipv4 ip;
     Mac  mac;
+
     while(buf->isEmpty() == false){ // maybe the first param of buf is empty
         switch(buf->type){
         case Typei08: 
@@ -215,12 +216,11 @@ void txMain(Text * resp, Any * buf){
             break;
         default: break;
         }
-        buf += 1;
+        buf++;
 
         if (buf->isEmpty() || (buf->type == Typestr && buf->str[0] == nullptr)){
             break;
-        }
-        else {
+        } else {
             resp[0] += ",";
         }
     }

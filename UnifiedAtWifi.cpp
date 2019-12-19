@@ -45,7 +45,7 @@ bool atWifiScan(Event whenScanFinished){
     // block if cmd not finished.
     tx("AT+CWLAP"); // no '?'
     rx("+CWLAP:", & item.ecn, & item.ssid, & item.rssi, & item.bssid, & item.channel);
-    
+
     // set after
     esp.wait = WaitWifiScan;
     esp.wifi.whenScanFinished = whenScanFinished;
@@ -153,8 +153,7 @@ $
 CMD(atApStartSmart, int32_t const & type)
     if (type == nullref){
         tx("AT+CWSTARTSMART");
-    }
-    else{
+    } else {
         tx("AT+CWSTARTSMART=", type);
     }
 $
