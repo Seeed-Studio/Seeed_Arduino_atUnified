@@ -21,6 +21,9 @@ static esp_sys_mutex_t maps_lock;
 static int maps_size;
 
 netconn_fd_t* atu_fd2conn(int s) {
+	if (s < 0) {
+		return NULL;
+	}
 	if (s >= maps_size) {
 		dump_tasks();
 		return NULL;
