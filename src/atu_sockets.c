@@ -18,6 +18,8 @@ typedef struct netconn_fd_s {
 
 	esp_netconn_type_t nc_type;
 	uint16_t keep_alive;
+
+	uint32_t file_flag;
 } netconn_fd_t;
 static netconn_fd_t* netconn_maps;
 static esp_sys_mutex_t maps_lock;
@@ -342,24 +344,30 @@ int atu_recv_r(int s, void *mem, size_t len, int flags) {
 	econ = esp_netconn_get_conn(nf->conn);
 
 	if (!nf->pbuf || !nf->bytes_left) {
-		uint32_t last_to; 
+		bool nowait;
+		uint32_t last_to;
 
+		nowait = (flags & MSG_DONTWAIT) || !len || (nf->file_flag & O_NONBLOCK);
 		/*
 		 * get a new pbuf
 		 */
-		if ((flags & MSG_DONTWAIT) || !len) {
+
+		if (nowait) {
 			last_to = esp_netconn_get_receive_timeout(nf->conn);
 			esp_netconn_set_receive_timeout(nf->conn, -1UL);
 		}
 
 		r = esp_netconn_receive(nf->conn, &nf->pbuf);
 
-		if ((flags & MSG_DONTWAIT) || !len) {
+		if (nowait) {
 			esp_netconn_set_receive_timeout(nf->conn, last_to);
 		}
 
 		if (r != espOK) {
-			if (!esp_conn_is_active(econ)) {
+			esp_netconn_type_t nc_type;
+
+			nc_type = ((netconn_fd_t*)esp_conn_get_arg(econ))->nc_type;
+			if (nc_type == ESP_NETCONN_TYPE_TCP && !esp_conn_is_active(econ)) {
 				errno = EBADF;
 				return -1;
 			}
@@ -480,7 +488,7 @@ int atu_ioctl_r(int s, long cmd, void *argp) {
 			timeout = esp_netconn_get_receive_timeout(nf->conn);
 
 			econ = esp_netconn_get_conn(nf->conn);
-			if (!esp_conn_is_active(econ)) {
+			if (1 /*!esp_conn_is_active(econ) || (nf->file_flag & O_NONBLOCK)*/) {
 				esp_netconn_set_receive_timeout(nf->conn, -1UL);
 			}
 			r = esp_netconn_receive(nf->conn, &nf->pbuf);
@@ -513,7 +521,26 @@ int atu_ioctl_r(int s, long cmd, void *argp) {
 }
 
 int atu_fcntl_r(int s, int cmd, int val) {
+	netconn_fd_t* nf;
+
 	printf("@C@\r\n");
+	nf = atu_fd2conn(s);
+	if (!nf || !nf->conn) {
+		return -1;
+	}
+	switch (cmd) {
+	case F_GETFL:
+		return nf->file_flag;
+
+	case F_SETFL:
+		nf->file_flag = val;
+		break;
+
+	default:
+		printf("atu_fcntl_r() unhandled cmd %d \r\n", cmd);
+		errno = EINVAL;
+		return -1;
+	}
 	return 0;
 }
 
