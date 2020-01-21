@@ -7,12 +7,15 @@
 
 #include <Arduino.h>
 
+#define LWIP_PROVIDE_ERRNO 1
 #include "esp_at_lib.h"
 #include "lwip/err.h"
+#include "lwip/errno.h"
 #include "lwip/ip_addr.h"
 #include "lwip/dns.h"
 #include "atu_sockets.h"
 #include "atu_netdb.h"
+#undef IPADDR_NONE
 #include "sdkconfig.h"
 #include "esp_err.h"
 #include "esp_wifi.h"
