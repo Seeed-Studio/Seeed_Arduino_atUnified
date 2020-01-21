@@ -15,6 +15,9 @@ typedef struct netconn_fd_s {
 	size_t bytes_left;
 
 	esp_sys_mutex_t fd_lock;
+
+	esp_netconn_type_t nc_type;
+	uint16_t keep_alive;
 } netconn_fd_t;
 static netconn_fd_t* netconn_maps;
 static esp_sys_mutex_t maps_lock;
@@ -72,9 +75,19 @@ int atu_conn2fd(esp_netconn_p netconn) {
 	return i;
 }
 
+static void* get_netconn_arg(esp_netconn_p nc) {
+	esp_conn_p econ;
+	econ = esp_netconn_get_conn(nc);
+
+	return esp_conn_get_arg(econ);
+}
+
 int atu_socket(int domain, int type, int protocol) {
 	esp_netconn_type_t nc_type;
 	esp_netconn_p nc;
+	esp_conn_p econ;
+	netconn_fd_t* nf;
+	int fd;
 
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
 
@@ -95,7 +108,15 @@ int atu_socket(int domain, int type, int protocol) {
 	if (!nc) {
 		return -1;
 	}
-	return atu_conn2fd(nc);
+
+	fd = atu_conn2fd(nc);
+
+	econ = esp_netconn_get_conn(nc);
+	nf = atu_fd2conn(fd);
+	nf->nc_type = nc_type;
+	esp_conn_set_arg(econ, nf);
+
+	return fd;
 }
 
 int atu_accept_r(int s, struct sockaddr *addr, socklen_t *addrlen) {
@@ -163,9 +184,10 @@ int atu_getsockopt_r (int s, int level, int optname, void *optval, socklen_t *op
 	netconn_fd_t* nf;
 	espr_t r;
 
-	printf("%s(opt %d) +++ L%d\r\n", __func__, optname, __LINE__);
+	printf("%s(opt 0x%X) +++ L%d\r\n", __func__, optname, __LINE__);
 	nf = atu_fd2conn(s);
 	if (!nf || !nf->conn) {
+		printf("%s() Invalid connection\r\n", __func__);
 		return -1;
 	}
 
@@ -208,8 +230,15 @@ int atu_setsockopt_r (int s, int level, int optname, const void *optval, socklen
 		case SO_RCVTIMEO:
 			tv = (struct timeval*)optval;
 			esp_netconn_set_receive_timeout(nf->conn, tv->tv_sec * 1000 + tv->tv_usec / 1000);
-		case SO_SNDTIMEO:
+			used = 1;
+			break;
+
 		case SO_KEEPALIVE:
+			nf->keep_alive = *(const int*)optval;
+			used = 1;
+			break;
+
+		case SO_SNDTIMEO:
 		case SO_DEBUG:
 		case SO_REUSEADDR:
 			used = 1;
@@ -275,7 +304,7 @@ int atu_connect_r(int s, const struct sockaddr *name, socklen_t namelen) {
 	esp_ip_2_str(ip_str, *(esp_ip_t*)&addr->sin_addr.s_addr);
 
 	printf("%s() connect to ip %s\r\n", __func__, ip_str);
-	r = esp_netconn_connect(nf->conn, ip_str, ntohs(addr->sin_port));
+	r = esp_netconn_connect_ex(nf->conn, ip_str, ntohs(addr->sin_port), nf->keep_alive, NULL, 0, 0);
 	if (r != espOK) {
 		return -1;
 	}
