@@ -151,13 +151,13 @@ int log_printf(const char *fmt, ...);
 #define ESP_EARLY_LOGV(tag, ...)  isr_log_v(__VA_ARGS__)
 #endif
 
+extern int dump_tasks(void);
+
 #ifdef __cplusplus
 }
 #endif
 
 #include "esp_at_lib.h"
 #define log_printf xprintf
-
-extern int dump_tasks(void);
 
 #endif /* __ESP_LOGGING_H__ */
