@@ -142,44 +142,6 @@ typedef struct {
 
 typedef esp_err_t (*system_event_handler_t)(system_event_t *event);
 
-/**
-  * @brief  Send a event to event task
-  *
-  * @attention 1. Other task/modules, such as the TCPIP module, can call this API to send an event to event task
-  *
-  * @param  system_event_t * event : event
-  *
-  * @return ESP_OK : succeed
-  * @return others : fail
-  */
-esp_err_t esp_event_send(system_event_t *event);
-
-/**
-  * @brief  Default event handler for system events
-  *
-  * This function performs default handling of system events.
-  * When using esp_event_loop APIs, it is called automatically before invoking the user-provided
-  * callback function.
-  *
-  * Applications which implement a custom event loop must call this function
-  * as part of event processing.
-  *
-  * @param  event pointer to event to be handled
-  * @return ESP_OK if an event was handled successfully
-  */
-esp_err_t esp_event_process_default(system_event_t *event);
-
-/**
-  * @brief  Install default event handlers for Ethernet interface
-  *
-  */
-void esp_event_set_default_eth_handlers();
-
-/**
-  * @brief  Install default event handlers for Wi-Fi interfaces (station and AP)
-  *
-  */
-void esp_event_set_default_wifi_handlers();
 
 #ifdef __cplusplus
 }
