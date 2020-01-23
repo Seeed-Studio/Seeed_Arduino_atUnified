@@ -328,6 +328,24 @@ typedef struct {
  */
 void esp_chip_info(esp_chip_info_t* out_info);
 
+
+/**
+  * @brief configure system-time(time.h) through SNTP functions.
+  *
+  * This function first configure SNTP server1 address,
+  * then get the network time from these servers,
+  * and then set system time with the time got.
+  *
+  * @param  timezone -11 to 13, 0 means UTC/GMT time.
+  * @param  reserved for future using, set to 0.
+  * @server1 SNTP server 1 address, set to NULL if unused.
+  * @server2 SNTP server 2 address, set to NULL if unused.
+  * @server3 SNTP server 3 address, set to NULL if unused.
+  *
+  * @return 0 on success, -1 on failed.
+  */
+int ntp_conf_time(int timezone, int reserved, const char* server1, const char* server2, const char* server3);
+
 #ifdef __cplusplus
 }
 #endif
