@@ -65,6 +65,10 @@ esp_err_t mdns_hostname_set(const char * hostname) {
 	strcpy(name, hostname);
 
 	mdns_hostname = name;
+
+	// a default hostname
+	// TODO: remove
+	esp_mdns_configure(1, name, "tcp", 80, NULL, NULL, true);
 	return ESP_OK;
 }
 /**
