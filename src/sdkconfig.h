@@ -1,9 +1,9 @@
 /*
- *
- * Automatically generated file; DO NOT EDIT.
- * Espressif IoT Development Framework Configuration
- *
- */
+
+    Automatically generated file; DO NOT EDIT.
+    Espressif IoT Development Framework Configuration
+
+*/
 #define CONFIG_GATTC_ENABLE 1
 #define CONFIG_ESP32_PHY_MAX_TX_POWER 20
 #define CONFIG_TRACEMEM_RESERVE_DRAM 0x0
@@ -372,9 +372,9 @@
 /* controller */
 #define ESP_TASK_BT_CONTROLLER_PRIO   (ESP_TASK_PRIO_MAX - 2)
 #ifdef CONFIG_NEWLIB_NANO_FORMAT
-#define TASK_EXTRA_STACK_SIZE      (0)
+    #define TASK_EXTRA_STACK_SIZE      (0)
 #else
-#define TASK_EXTRA_STACK_SIZE      (512)
+    #define TASK_EXTRA_STACK_SIZE      (512)
 #endif
 
 #define BT_TASK_EXTRA_STACK_SIZE      TASK_EXTRA_STACK_SIZE

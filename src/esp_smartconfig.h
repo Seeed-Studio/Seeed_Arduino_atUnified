@@ -38,95 +38,95 @@ typedef enum {
 } smartconfig_type_t;
 
 /**
-  * @brief  The callback of SmartConfig, executed when smart-config status changed.
-  *
-  * @param  status  Status of SmartConfig:
-  *    - SC_STATUS_GETTING_SSID_PSWD : pdata is a pointer of smartconfig_type_t, means config type.
-  *    - SC_STATUS_LINK : pdata is a pointer to wifi_config_t.
-  *    - SC_STATUS_LINK_OVER : pdata is a pointer of phone's IP address(4 bytes) if pdata unequal NULL.
-  *    - otherwise : parameter void *pdata is NULL.
-  * @param  pdata  According to the different status have different values.
-  *
-  */
-typedef void (*sc_callback_t)(smartconfig_status_t status, void *pdata);
+    @brief  The callback of SmartConfig, executed when smart-config status changed.
+
+    @param  status  Status of SmartConfig:
+       - SC_STATUS_GETTING_SSID_PSWD : pdata is a pointer of smartconfig_type_t, means config type.
+       - SC_STATUS_LINK : pdata is a pointer to wifi_config_t.
+       - SC_STATUS_LINK_OVER : pdata is a pointer of phone's IP address(4 bytes) if pdata unequal NULL.
+       - otherwise : parameter void *pdata is NULL.
+    @param  pdata  According to the different status have different values.
+
+*/
+typedef void (*sc_callback_t)(smartconfig_status_t status, void* pdata);
 
 /**
-  * @brief  Get the version of SmartConfig.
-  *
-  * @return
-  *     - SmartConfig version const char.
-  */
-const char *esp_smartconfig_get_version(void);
+    @brief  Get the version of SmartConfig.
+
+    @return
+        - SmartConfig version const char.
+*/
+const char* esp_smartconfig_get_version(void);
 
 /**
-  * @brief     Start SmartConfig, config ESP device to connect AP. You need to broadcast information by phone APP.
-  *            Device sniffer special packets from the air that containing SSID and password of target AP.
-  *
-  * @attention 1. This API can be called in station or softAP-station mode.
-  * @attention 2. Can not call esp_smartconfig_start twice before it finish, please call
-  *               esp_smartconfig_stop first.
-  *
-  * @param     cb  SmartConfig callback function.
-  * @param     ... log  1: UART output logs; 0: UART only outputs the result.
-  *
-  * @return
-  *     - ESP_OK: succeed
-  *     - others: fail
-  */
+    @brief     Start SmartConfig, config ESP device to connect AP. You need to broadcast information by phone APP.
+               Device sniffer special packets from the air that containing SSID and password of target AP.
+
+    @attention 1. This API can be called in station or softAP-station mode.
+    @attention 2. Can not call esp_smartconfig_start twice before it finish, please call
+                  esp_smartconfig_stop first.
+
+    @param     cb  SmartConfig callback function.
+    @param     ... log  1: UART output logs; 0: UART only outputs the result.
+
+    @return
+        - ESP_OK: succeed
+        - others: fail
+*/
 esp_err_t esp_smartconfig_start(sc_callback_t cb, ...);
 
 /**
-  * @brief     Stop SmartConfig, free the buffer taken by esp_smartconfig_start.
-  *
-  * @attention Whether connect to AP succeed or not, this API should be called to free
-  *            memory taken by smartconfig_start.
-  *
-  * @return
-  *     - ESP_OK: succeed
-  *     - others: fail
-  */
+    @brief     Stop SmartConfig, free the buffer taken by esp_smartconfig_start.
+
+    @attention Whether connect to AP succeed or not, this API should be called to free
+               memory taken by smartconfig_start.
+
+    @return
+        - ESP_OK: succeed
+        - others: fail
+*/
 esp_err_t esp_smartconfig_stop(void);
 
 /**
-  * @brief     Set timeout of SmartConfig process.
-  *
-  * @attention Timing starts from SC_STATUS_FIND_CHANNEL status. SmartConfig will restart if timeout.
-  *
-  * @param     time_s  range 15s~255s, offset:45s.
-  *
-  * @return
-  *     - ESP_OK: succeed
-  *     - others: fail
-  */
+    @brief     Set timeout of SmartConfig process.
+
+    @attention Timing starts from SC_STATUS_FIND_CHANNEL status. SmartConfig will restart if timeout.
+
+    @param     time_s  range 15s~255s, offset:45s.
+
+    @return
+        - ESP_OK: succeed
+        - others: fail
+*/
 esp_err_t esp_esptouch_set_timeout(uint8_t time_s);
 
 /**
-  * @brief     Set protocol type of SmartConfig.
-  *
-  * @attention If users need to set the SmartConfig type, please set it before calling
-  *            esp_smartconfig_start.
-  *
-  * @param     type  Choose from the smartconfig_type_t.
-  *
-  * @return
-  *     - ESP_OK: succeed
-  *     - others: fail
-  */
+    @brief     Set protocol type of SmartConfig.
+
+    @attention If users need to set the SmartConfig type, please set it before calling
+               esp_smartconfig_start.
+
+    @param     type  Choose from the smartconfig_type_t.
+
+    @return
+        - ESP_OK: succeed
+        - others: fail
+*/
 esp_err_t esp_smartconfig_set_type(smartconfig_type_t type);
 
 /**
-  * @brief     Set mode of SmartConfig. default normal mode.
-  *
-  * @attention 1. Please call it before API esp_smartconfig_start.
-  * @attention 2. Fast mode have corresponding APP(phone).
-  * @attention 3. Two mode is compatible.
-  *
-  * @param     enable  false-disable(default); true-enable;
-  *
-  * @return
-  *     - ESP_OK: succeed
-  *     - others: fail
-  */
+    @brief     Set mode of SmartConfig. default normal mode.
+
+    @attention 1. Please call it before API esp_smartconfig_start.
+    @attention 2. Fast mode have corresponding APP(phone).
+    @attention 3. Two mode is compatible.
+
+    @param     enable  false-disable(default); true-enable;
+
+    @return
+        - ESP_OK: succeed
+        - others: fail
+*/
 esp_err_t esp_smartconfig_fast_mode(bool enable);
 
 #ifdef __cplusplus

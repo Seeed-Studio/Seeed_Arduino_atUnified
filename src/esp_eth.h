@@ -16,7 +16,7 @@
 #define __ESP_ETH_H__
 
 #ifdef __GNUC__
-#include <sys/cdefs.h>
+    #include <sys/cdefs.h>
 #endif /*__GNUC__*/
 #include <stdint.h>
 #include <stdbool.h>
@@ -28,18 +28,18 @@ extern "C" {
 #endif
 
 /**
- * @brief Ethernet interface mode
- *
- */
+    @brief Ethernet interface mode
+
+*/
 typedef enum {
     ETH_MODE_RMII = 0, /*!< RMII mode */
     ETH_MODE_MII,      /*!< MII mode */
 } eth_mode_t;
 
 /**
- * @brief Ethernet clock mode
- *
- */
+    @brief Ethernet clock mode
+
+*/
 typedef enum {
     ETH_CLOCK_GPIO0_IN = 0,   /*!< RMII clock input to GPIO0 */
     ETH_CLOCK_GPIO0_OUT = 1,  /*!< RMII clock output from GPIO0 */
@@ -48,27 +48,27 @@ typedef enum {
 } eth_clock_mode_t;
 
 /**
- * @brief Ethernet Speed
- *
- */
+    @brief Ethernet Speed
+
+*/
 typedef enum {
     ETH_SPEED_MODE_10M = 0, /*!< Ethernet speed: 10Mbps */
     ETH_SPEED_MODE_100M,    /*!< Ethernet speed: 100Mbps */
 } eth_speed_mode_t;
 
 /**
- * @brief Ethernet Duplex
- *
- */
+    @brief Ethernet Duplex
+
+*/
 typedef enum {
     ETH_MODE_HALFDUPLEX = 0, /*!< Ethernet half duplex */
     ETH_MODE_FULLDUPLEX,     /*!< Ethernet full duplex */
 } eth_duplex_mode_t;
 
 /**
- * @brief Ethernet PHY address
- *
- */
+    @brief Ethernet PHY address
+
+*/
 typedef enum {
     PHY0 = 0, /*!< PHY address 0 */
     PHY1,     /*!< PHY address 1 */
@@ -109,15 +109,15 @@ typedef void (*eth_phy_check_init_func)(void);
 typedef eth_speed_mode_t (*eth_phy_get_speed_mode_func)(void);
 typedef eth_duplex_mode_t (*eth_phy_get_duplex_mode_func)(void);
 typedef esp_err_t (*eth_phy_func)(void);
-typedef esp_err_t (*eth_tcpip_input_func)(void *buffer, uint16_t len, void *eb);
+typedef esp_err_t (*eth_tcpip_input_func)(void* buffer, uint16_t len, void* eb);
 typedef void (*eth_gpio_config_func)(void);
 typedef bool (*eth_phy_get_partner_pause_enable_func)(void);
 typedef void (*eth_phy_power_enable_func)(bool enable);
 
 /**
- * @brief ethernet configuration
- *
- */
+    @brief ethernet configuration
+
+*/
 typedef struct {
     eth_phy_base_t phy_addr;                                            /*!< PHY address (0~31) */
     eth_mode_t mac_mode;                                                /*!< MAC mode: only support RMII now */
@@ -137,173 +137,172 @@ typedef struct {
 } eth_config_t;
 
 /**
- * @brief  Init ethernet mac
- *
- * @note   config can not be NULL, and phy chip must be suitable to phy init func.
- *
- * @param[in] config  mac init data.
- *
- * @return
- *      - ESP_OK
- *      - ESP_FAIL
- */
-esp_err_t esp_eth_init(eth_config_t *config);
+    @brief  Init ethernet mac
+
+    @note   config can not be NULL, and phy chip must be suitable to phy init func.
+
+    @param[in] config  mac init data.
+
+    @return
+        - ESP_OK
+        - ESP_FAIL
+*/
+esp_err_t esp_eth_init(eth_config_t* config);
 
 /**
- * @brief  Deinit ethernet mac
- *
- * @return
- *      - ESP_OK
- *      - ESP_FAIL
- *      - ESP_ERR_INVALID_STATE
- */
+    @brief  Deinit ethernet mac
+
+    @return
+        - ESP_OK
+        - ESP_FAIL
+        - ESP_ERR_INVALID_STATE
+*/
 esp_err_t esp_eth_deinit(void);
 
 /**
- * @brief  Init Ethernet mac driver only
- *
- * For the most part, you need not call this function directly. It gets called
- * from esp_eth_init().
- *
- * This function may be called, if you only need to initialize the Ethernet
- * driver without having to use the network stack on top.
- *
- * @note   config can not be NULL, and phy chip must be suitable to phy init func.
- * @param[in] config  mac init data.
- *
- * @return
- *      - ESP_OK
- *      - ESP_FAIL
- */
-esp_err_t esp_eth_init_internal(eth_config_t *config);
+    @brief  Init Ethernet mac driver only
+
+    For the most part, you need not call this function directly. It gets called
+    from esp_eth_init().
+
+    This function may be called, if you only need to initialize the Ethernet
+    driver without having to use the network stack on top.
+
+    @note   config can not be NULL, and phy chip must be suitable to phy init func.
+    @param[in] config  mac init data.
+
+    @return
+        - ESP_OK
+        - ESP_FAIL
+*/
+esp_err_t esp_eth_init_internal(eth_config_t* config);
 
 /**
- * @brief  Send packet from tcp/ip to mac
- *
- * @note   buf can not be NULL, size must be less than 1580
- *
- * @param[in] buf:  start address of packet data.
- *
- * @param[in] size:  size (byte) of packet data.
- *
- * @return
- *      - ESP_OK
- *      - ESP_FAIL
- */
-esp_err_t esp_eth_tx(uint8_t *buf, uint16_t size);
+    @brief  Send packet from tcp/ip to mac
+
+    @note   buf can not be NULL, size must be less than 1580
+
+    @param[in] buf:  start address of packet data.
+
+    @param[in] size:  size (byte) of packet data.
+
+    @return
+        - ESP_OK
+        - ESP_FAIL
+*/
+esp_err_t esp_eth_tx(uint8_t* buf, uint16_t size);
 
 /**
- * @brief  Enable ethernet interface
- *
- * @note   Should be called after esp_eth_init
- *
- * @return
- *      - ESP_OK
- *      - ESP_FAIL
- */
+    @brief  Enable ethernet interface
+
+    @note   Should be called after esp_eth_init
+
+    @return
+        - ESP_OK
+        - ESP_FAIL
+*/
 esp_err_t esp_eth_enable(void);
 
 /**
- * @brief  Disable ethernet interface
- *
- * @note   Should be called after esp_eth_init
- *
- * @return
- *      - ESP_OK
- *      - ESP_FAIL
- */
+    @brief  Disable ethernet interface
+
+    @note   Should be called after esp_eth_init
+
+    @return
+        - ESP_OK
+        - ESP_FAIL
+*/
 esp_err_t esp_eth_disable(void);
 
 /**
- * @brief  Get mac addr
- *
- * @note   mac addr must be a valid unicast address
- *
- * @param[out] mac:  start address of mac address.
- */
+    @brief  Get mac addr
+
+    @note   mac addr must be a valid unicast address
+
+    @param[out] mac:  start address of mac address.
+*/
 void esp_eth_get_mac(uint8_t mac[6]);
 
 /**
- * @brief  Write PHY reg with SMI interface.
- *
- * @note  PHY base addr must be right.
- *
- * @param[in] reg_num:  PHY reg num.
- *
- * @param[in] value: value which is written to PHY reg.
- */
+    @brief  Write PHY reg with SMI interface.
+
+    @note  PHY base addr must be right.
+
+    @param[in] reg_num:  PHY reg num.
+
+    @param[in] value: value which is written to PHY reg.
+*/
 void esp_eth_smi_write(uint32_t reg_num, uint16_t value);
 
 /**
- * @brief  Read PHY reg with SMI interface.
- *
- * @note  PHY base addr must be right.
- *
- * @param[in] reg_num:  PHY reg num.
- *
- * @return value that is read from PHY reg
- */
+    @brief  Read PHY reg with SMI interface.
+
+    @note  PHY base addr must be right.
+
+    @param[in] reg_num:  PHY reg num.
+
+    @return value that is read from PHY reg
+*/
 uint16_t esp_eth_smi_read(uint32_t reg_num);
 
 /**
- * @brief Continuously read a PHY register over SMI interface, wait until the register has the desired value.
- *
- * @note PHY base address must be right.
- *
- * @param reg_num: PHY register number
- * @param value: Value to wait for (masked with value_mask)
- * @param value_mask: Mask of bits to match in the register.
- * @param timeout_ms: Timeout to wait for this value (milliseconds). 0 means never timeout.
- *
- * @return ESP_OK if desired value matches, ESP_ERR_TIMEOUT if timed out.
- */
+    @brief Continuously read a PHY register over SMI interface, wait until the register has the desired value.
+
+    @note PHY base address must be right.
+
+    @param reg_num: PHY register number
+    @param value: Value to wait for (masked with value_mask)
+    @param value_mask: Mask of bits to match in the register.
+    @param timeout_ms: Timeout to wait for this value (milliseconds). 0 means never timeout.
+
+    @return ESP_OK if desired value matches, ESP_ERR_TIMEOUT if timed out.
+*/
 esp_err_t esp_eth_smi_wait_value(uint32_t reg_num, uint16_t value, uint16_t value_mask, int timeout_ms);
 
 /**
- * @brief Continuously read a PHY register over SMI interface, wait until the register has all bits in a mask set.
- *
- * @note PHY base address must be right.
- *
- * @param reg_num: PHY register number
- * @param value_mask: Value mask to wait for (all bits in this mask must be set)
- * @param timeout_ms: Timeout to wait for this value (milliseconds). 0 means never timeout.
- *
- * @return ESP_OK if desired value matches, ESP_ERR_TIMEOUT if timed out.
- */
-static inline esp_err_t esp_eth_smi_wait_set(uint32_t reg_num, uint16_t value_mask, int timeout_ms)
-{
+    @brief Continuously read a PHY register over SMI interface, wait until the register has all bits in a mask set.
+
+    @note PHY base address must be right.
+
+    @param reg_num: PHY register number
+    @param value_mask: Value mask to wait for (all bits in this mask must be set)
+    @param timeout_ms: Timeout to wait for this value (milliseconds). 0 means never timeout.
+
+    @return ESP_OK if desired value matches, ESP_ERR_TIMEOUT if timed out.
+*/
+static inline esp_err_t esp_eth_smi_wait_set(uint32_t reg_num, uint16_t value_mask, int timeout_ms) {
     return esp_eth_smi_wait_value(reg_num, value_mask, value_mask, timeout_ms);
 }
 
 /**
- * @brief  Free emac rx buf.
- *
- * @note  buf can not be null, and it is tcpip input buf.
- *
- * @param[in] buf: start address of received packet data.
- *
- */
-void esp_eth_free_rx_buf(void *buf);
+    @brief  Free emac rx buf.
+
+    @note  buf can not be null, and it is tcpip input buf.
+
+    @param[in] buf: start address of received packet data.
+
+*/
+void esp_eth_free_rx_buf(void* buf);
 
 /**
- * @brief  Set mac of ethernet interface.
- *
- * @note user can call this function after emac_init, and the new mac address will be enabled after emac_enable.
- *
- * @param[in] mac: the Mac address.
- *
- * @return
- *    - ESP_OK: succeed
- *    - ESP_ERR_INVALID_MAC: invalid mac address
- */
+    @brief  Set mac of ethernet interface.
+
+    @note user can call this function after emac_init, and the new mac address will be enabled after emac_enable.
+
+    @param[in] mac: the Mac address.
+
+    @return
+      - ESP_OK: succeed
+      - ESP_ERR_INVALID_MAC: invalid mac address
+*/
 esp_err_t esp_eth_set_mac(const uint8_t mac[6]);
 
 /**
- * @brief Get Ethernet link speed
- *
- * @return eth_speed_mode_t ETH_SPEED_MODE_10M when link speed is 10Mbps
- *                          ETH_SPEED_MODE_100M when link speed is 100Mbps
- */
+    @brief Get Ethernet link speed
+
+    @return eth_speed_mode_t ETH_SPEED_MODE_10M when link speed is 10Mbps
+                            ETH_SPEED_MODE_100M when link speed is 100Mbps
+*/
 eth_speed_mode_t esp_eth_get_speed(void);
 
 #ifdef __cplusplus

@@ -1,7 +1,7 @@
 /*
- *  The MIT License (MIT)
- *  Copyright (C) 2019  Seeed Technology Co.,Ltd.
- */
+    The MIT License (MIT)
+    Copyright (C) 2019  Seeed Technology Co.,Ltd.
+*/
 #ifndef _SEED_ATUNIFIED_H__
 #define _SEED_ATUNIFIED_H__
 

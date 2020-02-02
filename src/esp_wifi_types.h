@@ -54,7 +54,8 @@ typedef struct {
     char                  cc[3];   /**< country code string */
     uint8_t               schan;   /**< start channel */
     uint8_t               nchan;   /**< total channel number */
-    int8_t                max_tx_power;   /**< This field is used for getting WiFi maximum transmitting power, call esp_wifi_set_max_tx_power to set the maximum transmitting power. */
+    int8_t
+    max_tx_power;   /**< This field is used for getting WiFi maximum transmitting power, call esp_wifi_set_max_tx_power to set the maximum transmitting power. */
     wifi_country_policy_t policy;  /**< country policy */
 } wifi_country_t;
 
@@ -128,8 +129,8 @@ typedef union {
 
 /** @brief Parameters for an SSID scan. */
 typedef struct {
-    uint8_t *ssid;               /**< SSID of AP */
-    uint8_t *bssid;              /**< MAC address of AP */
+    uint8_t* ssid;               /**< SSID of AP */
+    uint8_t* bssid;              /**< MAC address of AP */
     uint8_t channel;             /**< channel, scan the specific channel */
     bool show_hidden;            /**< enable to scan AP whose SSID is hidden */
     wifi_scan_type_t scan_type;  /**< scan type, active or passive */
@@ -147,9 +148,9 @@ typedef enum {
 } wifi_cipher_type_t;
 
 /**
-  * @brief WiFi antenna
-  *
-  */
+    @brief WiFi antenna
+
+*/
 typedef enum {
     WIFI_ANT_ANT0,          /**< WiFi antenna 0 */
     WIFI_ANT_ANT1,          /**< WiFi antenna 1 */
@@ -167,32 +168,33 @@ typedef struct {
     wifi_cipher_type_t pairwise_cipher;   /**< pairwise cipher of AP */
     wifi_cipher_type_t group_cipher;      /**< group cipher of AP */
     wifi_ant_t ant;                       /**< antenna used to receive beacon from AP */
-    uint32_t phy_11b:1;                   /**< bit: 0 flag to identify if 11b mode is enabled or not */
-    uint32_t phy_11g:1;                   /**< bit: 1 flag to identify if 11g mode is enabled or not */
-    uint32_t phy_11n:1;                   /**< bit: 2 flag to identify if 11n mode is enabled or not */
-    uint32_t phy_lr:1;                    /**< bit: 3 flag to identify if low rate is enabled or not */
-    uint32_t wps:1;                       /**< bit: 4 flag to identify if WPS is supported or not */
-    uint32_t reserved:27;                 /**< bit: 5..31 reserved */
+    uint32_t phy_11b: 1;                  /**< bit: 0 flag to identify if 11b mode is enabled or not */
+    uint32_t phy_11g: 1;                  /**< bit: 1 flag to identify if 11g mode is enabled or not */
+    uint32_t phy_11n: 1;                  /**< bit: 2 flag to identify if 11n mode is enabled or not */
+    uint32_t phy_lr: 1;                   /**< bit: 3 flag to identify if low rate is enabled or not */
+    uint32_t wps: 1;                      /**< bit: 4 flag to identify if WPS is supported or not */
+    uint32_t reserved: 27;                /**< bit: 5..31 reserved */
     wifi_country_t country;               /**< country information of AP */
 } wifi_ap_record_t;
 
 typedef enum {
     WIFI_FAST_SCAN = 0,                   /**< Do fast scan, scan will end after find SSID match AP */
     WIFI_ALL_CHANNEL_SCAN,                /**< All channel scan, scan will end after scan all the channel */
-}wifi_scan_method_t;
+} wifi_scan_method_t;
 
 typedef enum {
     WIFI_CONNECT_AP_BY_SIGNAL = 0,        /**< Sort match AP in scan list by RSSI */
     WIFI_CONNECT_AP_BY_SECURITY,          /**< Sort match AP in scan list by security mode */
-}wifi_sort_method_t;
+} wifi_sort_method_t;
 
 /** @brief Structure describing parameters for a WiFi fast scan */
 typedef struct {
     int8_t              rssi;             /**< The minimum rssi to accept in the fast scan mode */
     wifi_auth_mode_t    authmode;         /**< The weakest authmode to accept in the fast scan mode */
-}wifi_fast_scan_threshold_t;
+} wifi_fast_scan_threshold_t;
 
-typedef wifi_fast_scan_threshold_t wifi_scan_threshold_t;    /**< wifi_fast_scan_threshold_t only used in fast scan mode once, now it enabled in all channel scan, the wifi_fast_scan_threshold_t will be remove in version 4.0 */
+typedef wifi_fast_scan_threshold_t
+wifi_scan_threshold_t;    /**< wifi_fast_scan_threshold_t only used in fast scan mode once, now it enabled in all channel scan, the wifi_fast_scan_threshold_t will be remove in version 4.0 */
 
 typedef enum {
     WIFI_PS_NONE,        /**< No power save */
@@ -234,15 +236,16 @@ typedef struct {
     uint8_t channel;       /**< channel of target AP. Set to 1~13 to scan starting from the specified channel before connecting to AP. If the channel of AP is unknown, set it to 0.*/
     uint16_t listen_interval;   /**< Listen interval for ESP32 station to receive beacon when WIFI_PS_MAX_MODEM is set. Units: AP beacon intervals. Defaults to 3 if set to 0. */
     wifi_sort_method_t sort_method;    /**< sort the connect AP in the list by rssi or security mode */
-    wifi_scan_threshold_t  threshold;     /**< When scan_method is set, only APs which have an auth mode that is more secure than the selected auth mode and a signal stronger than the minimum RSSI will be used. */
+    wifi_scan_threshold_t
+    threshold;     /**< When scan_method is set, only APs which have an auth mode that is more secure than the selected auth mode and a signal stronger than the minimum RSSI will be used. */
 } wifi_sta_config_t;
 
 /** @brief Configuration data for ESP32 AP or STA.
- *
- * The usage of this union (for ap or sta configuration) is determined by the accompanying
- * interface argument passed to esp_wifi_set_config() or esp_wifi_get_config()
- *
- */
+
+    The usage of this union (for ap or sta configuration) is determined by the accompanying
+    interface argument passed to esp_wifi_set_config() or esp_wifi_get_config()
+
+*/
 typedef union {
     wifi_ap_config_t  ap;  /**< configuration of AP */
     wifi_sta_config_t sta; /**< configuration of STA */
@@ -252,11 +255,11 @@ typedef union {
 typedef struct {
     uint8_t mac[6];  /**< mac address */
     int8_t  rssi;    /**< current average rssi of sta connected */
-    uint32_t phy_11b:1;      /**< bit: 0 flag to identify if 11b mode is enabled or not */
-    uint32_t phy_11g:1;      /**< bit: 1 flag to identify if 11g mode is enabled or not */
-    uint32_t phy_11n:1;      /**< bit: 2 flag to identify if 11n mode is enabled or not */
-    uint32_t phy_lr:1;       /**< bit: 3 flag to identify if low rate is enabled or not */
-    uint32_t reserved:28;    /**< bit: 4..31 reserved */
+    uint32_t phy_11b: 1;     /**< bit: 0 flag to identify if 11b mode is enabled or not */
+    uint32_t phy_11g: 1;     /**< bit: 1 flag to identify if 11g mode is enabled or not */
+    uint32_t phy_11n: 1;     /**< bit: 2 flag to identify if 11n mode is enabled or not */
+    uint32_t phy_lr: 1;      /**< bit: 3 flag to identify if low rate is enabled or not */
+    uint32_t reserved: 28;   /**< bit: 4..31 reserved */
 } wifi_sta_info_t;
 
 #define ESP_WIFI_MAX_CONN_NUM  (10)       /**< max number of stations which can connect to ESP32 soft-AP */
@@ -273,10 +276,10 @@ typedef enum {
 } wifi_storage_t;
 
 /**
-  * @brief     Vendor Information Element type
-  *
-  * Determines the frame type that the IE will be associated with.
-  */
+    @brief     Vendor Information Element type
+
+    Determines the frame type that the IE will be associated with.
+*/
 typedef enum {
     WIFI_VND_IE_TYPE_BEACON,
     WIFI_VND_IE_TYPE_PROBE_REQ,
@@ -286,10 +289,10 @@ typedef enum {
 } wifi_vendor_ie_type_t;
 
 /**
-  * @brief     Vendor Information Element index
-  *
-  * Each IE type can have up to two associated vendor ID elements.
-  */
+    @brief     Vendor Information Element index
+
+    Each IE type can have up to two associated vendor ID elements.
+*/
 typedef enum {
     WIFI_VND_IE_ID_0,
     WIFI_VND_IE_ID_1,
@@ -298,10 +301,10 @@ typedef enum {
 #define WIFI_VENDOR_IE_ELEMENT_ID 0xDD
 
 /**
- * @brief Vendor Information Element header
- *
- * The first bytes of the Information Element will match this header. Payload follows.
- */
+    @brief Vendor Information Element header
+
+    The first bytes of the Information Element will match this header. Payload follows.
+*/
 typedef struct {
     uint8_t element_id;      /**< Should be set to WIFI_VENDOR_IE_ELEMENT_ID (0xDD) */
     uint8_t length;          /**< Length of all bytes in the element data following this field. Minimum 4. */
@@ -312,48 +315,51 @@ typedef struct {
 
 /** @brief Received packet radio metadata header, this is the common header at the beginning of all promiscuous mode RX callback buffers */
 typedef struct {
-    signed rssi:8;                /**< Received Signal Strength Indicator(RSSI) of packet. unit: dBm */
-    unsigned rate:5;              /**< PHY rate encoding of the packet. Only valid for non HT(11bg) packet */
-    unsigned :1;                  /**< reserve */
-    unsigned sig_mode:2;          /**< 0: non HT(11bg) packet; 1: HT(11n) packet; 3: VHT(11ac) packet */
-    unsigned :16;                 /**< reserve */
-    unsigned mcs:7;               /**< Modulation Coding Scheme. If is HT(11n) packet, shows the modulation, range from 0 to 76(MSC0 ~ MCS76) */
-    unsigned cwb:1;               /**< Channel Bandwidth of the packet. 0: 20MHz; 1: 40MHz */
-    unsigned :16;                 /**< reserve */
-    unsigned smoothing:1;         /**< reserve */
-    unsigned not_sounding:1;      /**< reserve */
-    unsigned :1;                  /**< reserve */
-    unsigned aggregation:1;       /**< Aggregation. 0: MPDU packet; 1: AMPDU packet */
-    unsigned stbc:2;              /**< Space Time Block Code(STBC). 0: non STBC packet; 1: STBC packet */
-    unsigned fec_coding:1;        /**< Flag is set for 11n packets which are LDPC */
-    unsigned sgi:1;               /**< Short Guide Interval(SGI). 0: Long GI; 1: Short GI */
-    signed noise_floor:8;         /**< noise floor of Radio Frequency Module(RF). unit: 0.25dBm*/
-    unsigned ampdu_cnt:8;         /**< ampdu cnt */
-    unsigned channel:4;           /**< primary channel on which this packet is received */
-    unsigned secondary_channel:4; /**< secondary channel on which this packet is received. 0: none; 1: above; 2: below */
-    unsigned :8;                  /**< reserve */
-    unsigned timestamp:32;        /**< timestamp. The local time when this packet is received. It is precise only if modem sleep or light sleep is not enabled. unit: microsecond */
-    unsigned :32;                 /**< reserve */
-    unsigned :31;                 /**< reserve */
-    unsigned ant:1;               /**< antenna number from which this packet is received. 0: WiFi antenna 0; 1: WiFi antenna 1 */
-    unsigned sig_len:12;          /**< length of packet including Frame Check Sequence(FCS) */
-    unsigned :12;                 /**< reserve */
-    unsigned rx_state:8;          /**< state of the packet. 0: no error; others: error numbers which are not public */
+    signed rssi: 8;               /**< Received Signal Strength Indicator(RSSI) of packet. unit: dBm */
+    unsigned rate: 5;             /**< PHY rate encoding of the packet. Only valid for non HT(11bg) packet */
+    unsigned : 1;                 /**< reserve */
+    unsigned sig_mode: 2;         /**< 0: non HT(11bg) packet; 1: HT(11n) packet; 3: VHT(11ac) packet */
+    unsigned : 16;                /**< reserve */
+unsigned mcs:
+    7;              /**< Modulation Coding Scheme. If is HT(11n) packet, shows the modulation, range from 0 to 76(MSC0 ~ MCS76) */
+    unsigned cwb: 1;              /**< Channel Bandwidth of the packet. 0: 20MHz; 1: 40MHz */
+    unsigned : 16;                /**< reserve */
+    unsigned smoothing: 1;        /**< reserve */
+    unsigned not_sounding: 1;     /**< reserve */
+    unsigned : 1;                 /**< reserve */
+    unsigned aggregation: 1;      /**< Aggregation. 0: MPDU packet; 1: AMPDU packet */
+    unsigned stbc: 2;             /**< Space Time Block Code(STBC). 0: non STBC packet; 1: STBC packet */
+    unsigned fec_coding: 1;       /**< Flag is set for 11n packets which are LDPC */
+    unsigned sgi: 1;              /**< Short Guide Interval(SGI). 0: Long GI; 1: Short GI */
+    signed noise_floor: 8;        /**< noise floor of Radio Frequency Module(RF). unit: 0.25dBm*/
+    unsigned ampdu_cnt: 8;        /**< ampdu cnt */
+    unsigned channel: 4;          /**< primary channel on which this packet is received */
+    unsigned secondary_channel: 4; /**< secondary channel on which this packet is received. 0: none; 1: above; 2: below */
+    unsigned : 8;                 /**< reserve */
+unsigned timestamp:
+    32;       /**< timestamp. The local time when this packet is received. It is precise only if modem sleep or light sleep is not enabled. unit: microsecond */
+    unsigned : 32;                /**< reserve */
+    unsigned : 31;                /**< reserve */
+unsigned ant:
+    1;              /**< antenna number from which this packet is received. 0: WiFi antenna 0; 1: WiFi antenna 1 */
+    unsigned sig_len: 12;         /**< length of packet including Frame Check Sequence(FCS) */
+    unsigned : 12;                /**< reserve */
+    unsigned rx_state: 8;         /**< state of the packet. 0: no error; others: error numbers which are not public */
 } wifi_pkt_rx_ctrl_t;
 
 /** @brief Payload passed to 'buf' parameter of promiscuous mode RX callback.
- */
+*/
 typedef struct {
     wifi_pkt_rx_ctrl_t rx_ctrl; /**< metadata header */
     uint8_t payload[0];       /**< Data or management payload. Length of payload is described by rx_ctrl.sig_len. Type of content determined by packet type argument of callback. */
 } wifi_promiscuous_pkt_t;
 
 /**
-  * @brief Promiscuous frame type
-  *
-  * Passed to promiscuous mode RX callback to indicate the type of parameter in the buffer.
-  *
-  */
+    @brief Promiscuous frame type
+
+    Passed to promiscuous mode RX callback to indicate the type of parameter in the buffer.
+
+*/
 typedef enum {
     WIFI_PKT_MGMT,  /**< Management frame, indicates 'buf' argument is wifi_promiscuous_pkt_t */
     WIFI_PKT_CTRL,  /**< Control frame, indicates 'buf' argument is wifi_promiscuous_pkt_t */
@@ -391,52 +397,52 @@ typedef struct {
 #define WIFI_EVENT_MASK_AP_PROBEREQRECVED   (BIT(0))      /**< mask SYSTEM_EVENT_AP_PROBEREQRECVED event */
 
 /**
-  * @brief Channel state information(CSI) configuration type
-  *
-  */
+    @brief Channel state information(CSI) configuration type
+
+*/
 typedef struct {
     bool lltf_en;           /**< enable to receive legacy long training field(lltf) data. Default enabled */
     bool htltf_en;          /**< enable to receive HT long training field(htltf) data. Default enabled */
     bool stbc_htltf2_en;    /**< enable to receive space time block code HT long training field(stbc-htltf2) data. Default enabled */
     bool ltf_merge_en;      /**< enable to generate htlft data by averaging lltf and ht_ltf data when receiving HT packet. Otherwise, use ht_ltf data directly. Default enabled */
     bool channel_filter_en; /**< enable to turn on channel filter to smooth adjacent sub-carrier. Disable it to keep independence of adjacent sub-carrier. Default enabled */
-    bool manu_scale;        /**< manually scale the CSI data by left shifting or automatically scale the CSI data. If set true, please set the shift bits. false: automatically. true: manually. Default false */ 
+    bool manu_scale;        /**< manually scale the CSI data by left shifting or automatically scale the CSI data. If set true, please set the shift bits. false: automatically. true: manually. Default false */
     uint8_t shift;          /**< manually left shift bits of the scale of the CSI data. The range of the left shift bits is 0~15 */
 } wifi_csi_config_t;
 
 /**
-  * @brief CSI data type
-  *
-  */
+    @brief CSI data type
+
+*/
 typedef struct {
     wifi_pkt_rx_ctrl_t rx_ctrl;/**< received packet radio metadata header of the CSI data */
     uint8_t mac[6];            /**< source MAC address of the CSI data */
     bool first_word_invalid;   /**< first four bytes of the CSI data is invalid or not */
-    int8_t *buf;               /**< buffer of CSI data */
+    int8_t* buf;               /**< buffer of CSI data */
     uint16_t len;              /**< length of CSI data */
 } wifi_csi_info_t;
 
 /**
-  * @brief WiFi GPIO configuration for antenna selection
-  *
-  */
+    @brief WiFi GPIO configuration for antenna selection
+
+*/
 typedef struct {
     uint8_t gpio_select: 1,           /**< Whether this GPIO is connected to external antenna switch */
             gpio_num: 7;              /**< The GPIO number that connects to external antenna switch */
 } wifi_ant_gpio_t;
 
 /**
-  * @brief WiFi GPIOs configuration for antenna selection
-  *
-  */
+    @brief WiFi GPIOs configuration for antenna selection
+
+*/
 typedef struct {
     wifi_ant_gpio_t  gpio_cfg[4];  /**< The configurations of GPIOs that connect to external antenna switch */
 } wifi_ant_gpio_config_t;
 
 /**
-  * @brief WiFi antenna mode
-  *
-  */
+    @brief WiFi antenna mode
+
+*/
 typedef enum {
     WIFI_ANT_MODE_ANT0,          /**< Enable WiFi antenna 0 only */
     WIFI_ANT_MODE_ANT1,          /**< Enable WiFi antenna 1 only */
@@ -445,21 +451,23 @@ typedef enum {
 } wifi_ant_mode_t;
 
 /**
-  * @brief WiFi antenna configuration
-  *
-  */
+    @brief WiFi antenna configuration
+
+*/
 typedef struct {
     wifi_ant_mode_t rx_ant_mode;          /**< WiFi antenna mode for receiving */
-    wifi_ant_t      rx_ant_default;       /**< Default antenna mode for receiving, it's ignored if rx_ant_mode is not WIFI_ANT_MODE_AUTO */
-    wifi_ant_mode_t tx_ant_mode;          /**< WiFi antenna mode for transmission, it can be set to WIFI_ANT_MODE_AUTO only if rx_ant_mode is set to WIFI_ANT_MODE_AUTO */
+    wifi_ant_t
+    rx_ant_default;       /**< Default antenna mode for receiving, it's ignored if rx_ant_mode is not WIFI_ANT_MODE_AUTO */
+    wifi_ant_mode_t
+    tx_ant_mode;          /**< WiFi antenna mode for transmission, it can be set to WIFI_ANT_MODE_AUTO only if rx_ant_mode is set to WIFI_ANT_MODE_AUTO */
     uint8_t         enabled_ant0: 4,      /**< Index (in antenna GPIO configuration) of enabled WIFI_ANT_MODE_ANT0 */
                     enabled_ant1: 4;      /**< Index (in antenna GPIO configuration) of enabled WIFI_ANT_MODE_ANT1 */
 } wifi_ant_config_t;
 
 /**
-  * @brief WiFi PHY rate encodings
-  *
-  */
+    @brief WiFi PHY rate encodings
+
+*/
 typedef enum {
     WIFI_PHY_RATE_1M_L      = 0x00, /**< 1 Mbps with long preamble */
     WIFI_PHY_RATE_2M_L      = 0x01, /**< 2 Mbps with long preamble */
@@ -497,28 +505,28 @@ typedef enum {
     WIFI_PHY_RATE_MAX,
 } wifi_phy_rate_t;
 
-/** 
-  * @brief WiFi ioctl command type
-  *
-  */
+/**
+    @brief WiFi ioctl command type
+
+*/
 typedef enum {
     WIFI_IOCTL_SET_STA_HT2040_COEX = 1, /**< Set the configuration of STA's HT2040 coexist management */
     WIFI_IOCTL_GET_STA_HT2040_COEX,     /**< Get the configuration of STA's HT2040 coexist management */
     WIFI_IOCTL_MAX,
 } wifi_ioctl_cmd_t;
 
-/** 
- * @brief Configuration for STA's HT2040 coexist management
- *
- */
+/**
+    @brief Configuration for STA's HT2040 coexist management
+
+*/
 typedef struct {
     int enable;                         /**< Indicate whether STA's HT2040 coexist management is enabled or not */
 } wifi_ht2040_coex_t;
 
-/** 
-  * @brief Configuration for WiFi ioctl
-  *
-  */
+/**
+    @brief Configuration for WiFi ioctl
+
+*/
 typedef struct {
     union {
         wifi_ht2040_coex_t ht2040_coex; /**< Configuration of STA's HT2040 coexist management */

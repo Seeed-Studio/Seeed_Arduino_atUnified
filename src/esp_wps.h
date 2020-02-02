@@ -24,23 +24,23 @@ extern "C" {
 #endif
 
 /** \defgroup WiFi_APIs WiFi Related APIs
-  * @brief WiFi APIs
-  */
+    @brief WiFi APIs
+*/
 
 /** @addtogroup WiFi_APIs
-  * @{
-  */
+    @{
+*/
 
 /** \defgroup WPS_APIs  WPS APIs
-  * @brief ESP32 WPS APIs
-  *
-  * WPS can only be used when ESP32 station is enabled.
-  *
-  */
+    @brief ESP32 WPS APIs
+
+    WPS can only be used when ESP32 station is enabled.
+
+*/
 
 /** @addtogroup WPS_APIs
-  * @{
-  */
+    @{
+*/
 
 #define ESP_ERR_WIFI_REGISTRAR   (ESP_ERR_WIFI_BASE + 51)  /*!< WPS registrar is not supported */
 #define ESP_ERR_WIFI_WPS_TYPE    (ESP_ERR_WIFI_BASE + 52)  /*!< WPS type error */
@@ -71,66 +71,66 @@ typedef struct {
 } esp_wps_config_t;
 
 #define WPS_CONFIG_INIT_DEFAULT(type) { \
-    .wps_type = type, \
-    .factory_info = {   \
-        .manufacturer = "ESPRESSIF",  \
-        .model_number = "ESP32",  \
-        .model_name = "ESPRESSIF IOT",  \
-        .device_name = "ESP STATION",  \
-    }  \
-}
+        .wps_type = type, \
+                    .factory_info = {   \
+                                        .manufacturer = "ESPRESSIF",  \
+                                        .model_number = "ESP32",  \
+                                        .model_name = "ESPRESSIF IOT",  \
+                                        .device_name = "ESP STATION",  \
+                                    }  \
+    }
 
 /**
-  * @brief     Enable Wi-Fi WPS function.
-  *
-  * @attention WPS can only be used when ESP32 station is enabled.
-  *
-  * @param     wps_type_t wps_type : WPS type, so far only WPS_TYPE_PBC and WPS_TYPE_PIN is supported
-  *
-  * @return    
-  *          - ESP_OK : succeed
-  *          - ESP_ERR_WIFI_WPS_TYPE : wps type is invalid
-  *          - ESP_ERR_WIFI_WPS_MODE : wifi is not in station mode or sniffer mode is on
-  *          - ESP_FAIL : wps initialization fails
-  */
-esp_err_t esp_wifi_wps_enable(const esp_wps_config_t *config);
+    @brief     Enable Wi-Fi WPS function.
+
+    @attention WPS can only be used when ESP32 station is enabled.
+
+    @param     wps_type_t wps_type : WPS type, so far only WPS_TYPE_PBC and WPS_TYPE_PIN is supported
+
+    @return
+             - ESP_OK : succeed
+             - ESP_ERR_WIFI_WPS_TYPE : wps type is invalid
+             - ESP_ERR_WIFI_WPS_MODE : wifi is not in station mode or sniffer mode is on
+             - ESP_FAIL : wps initialization fails
+*/
+esp_err_t esp_wifi_wps_enable(const esp_wps_config_t* config);
 
 /**
-  * @brief  Disable Wi-Fi WPS function and release resource it taken.
-  *
-  * @param  null
-  *
-  * @return    
-  *          - ESP_OK : succeed
-  *          - ESP_ERR_WIFI_WPS_MODE : wifi is not in station mode or sniffer mode is on
-  */
+    @brief  Disable Wi-Fi WPS function and release resource it taken.
+
+    @param  null
+
+    @return
+             - ESP_OK : succeed
+             - ESP_ERR_WIFI_WPS_MODE : wifi is not in station mode or sniffer mode is on
+*/
 esp_err_t esp_wifi_wps_disable(void);
 
 /**
-  * @brief     WPS starts to work.
-  *
-  * @attention WPS can only be used when ESP32 station is enabled.
-  *
-  * @param     timeout_ms : maximum blocking time before API return.
-  *          - 0 : non-blocking
-  *          - 1~120000 : blocking time (not supported in IDF v1.0)
-  *
-  * @return    
-  *          - ESP_OK : succeed
-  *          - ESP_ERR_WIFI_WPS_TYPE : wps type is invalid
-  *          - ESP_ERR_WIFI_WPS_MODE : wifi is not in station mode or sniffer mode is on
-  *          - ESP_ERR_WIFI_WPS_SM : wps state machine is not initialized
-  *          - ESP_FAIL : wps initialization fails
-  */
+    @brief     WPS starts to work.
+
+    @attention WPS can only be used when ESP32 station is enabled.
+
+    @param     timeout_ms : maximum blocking time before API return.
+             - 0 : non-blocking
+             - 1~120000 : blocking time (not supported in IDF v1.0)
+
+    @return
+             - ESP_OK : succeed
+             - ESP_ERR_WIFI_WPS_TYPE : wps type is invalid
+             - ESP_ERR_WIFI_WPS_MODE : wifi is not in station mode or sniffer mode is on
+             - ESP_ERR_WIFI_WPS_SM : wps state machine is not initialized
+             - ESP_FAIL : wps initialization fails
+*/
 esp_err_t esp_wifi_wps_start(int timeout_ms);
 
 /**
-  * @}
-  */
+    @}
+*/
 
 /**
-  * @}
-  */
+    @}
+*/
 
 #ifdef __cplusplus
 }

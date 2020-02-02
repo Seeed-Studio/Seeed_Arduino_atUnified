@@ -29,49 +29,49 @@ extern "C" {
 #endif
 
 /**
-  * @brief  Application specified event callback function
-  *
-  * @param  void *ctx : reserved for user
-  * @param  system_event_t *event : event type defined in this file
-  *
-  * @return ESP_OK : succeed
-  * @return others : fail
-  */
-typedef esp_err_t (*system_event_cb_t)(void *ctx, system_event_t *event);
+    @brief  Application specified event callback function
+
+    @param  void *ctx : reserved for user
+    @param  system_event_t *event : event type defined in this file
+
+    @return ESP_OK : succeed
+    @return others : fail
+*/
+typedef esp_err_t (*system_event_cb_t)(void* ctx, system_event_t* event);
 
 /**
-  * @brief  Initialize event loop
-  *         Create the event handler and task
-  *
-  * @param  system_event_cb_t cb : application specified event callback, it can be modified by call esp_event_set_cb
-  * @param  void *ctx : reserved for user
-  *
-  * @return ESP_OK : succeed
-  * @return others : fail
-  */
-esp_err_t esp_event_loop_init(system_event_cb_t cb, void *ctx);
+    @brief  Initialize event loop
+            Create the event handler and task
+
+    @param  system_event_cb_t cb : application specified event callback, it can be modified by call esp_event_set_cb
+    @param  void *ctx : reserved for user
+
+    @return ESP_OK : succeed
+    @return others : fail
+*/
+esp_err_t esp_event_loop_init(system_event_cb_t cb, void* ctx);
 
 /**
-  * @brief  Set application specified event callback function
-  *
-  * @attention 1. If cb is NULL, means application don't need to handle
-  *               If cb is not NULL, it will be call when an event is received, after the default event callback is completed
-  *
-  * @param  system_event_cb_t cb : callback
-  * @param  void *ctx : reserved for user
-  *
-  * @return system_event_cb_t : old callback
-  */
-system_event_cb_t esp_event_loop_set_cb(system_event_cb_t cb, void *ctx);
+    @brief  Set application specified event callback function
+
+    @attention 1. If cb is NULL, means application don't need to handle
+                  If cb is not NULL, it will be call when an event is received, after the default event callback is completed
+
+    @param  system_event_cb_t cb : callback
+    @param  void *ctx : reserved for user
+
+    @return system_event_cb_t : old callback
+*/
+system_event_cb_t esp_event_loop_set_cb(system_event_cb_t cb, void* ctx);
 
 /**
-  * @brief  Get the queue used by event loop
-  *
-  * @attention : currently this API is used to initialize "q" parameter
-  * of wifi_init structure.
-  *
-  * @return QueueHandle_t : event queue handle
-  */
+    @brief  Get the queue used by event loop
+
+    @attention : currently this API is used to initialize "q" parameter
+    of wifi_init structure.
+
+    @return QueueHandle_t : event queue handle
+*/
 QueueHandle_t esp_event_loop_get_queue(void);
 
 

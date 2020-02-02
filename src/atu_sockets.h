@@ -1,39 +1,39 @@
 /**
- * @file
- * Socket API (to be used from non-TCPIP threads)
- */
+    @file
+    Socket API (to be used from non-TCPIP threads)
+*/
 
 /*
- * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice,
- *    this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- *    this list of conditions and the following disclaimer in the documentation
- *    and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
- * OF SUCH DAMAGE.
- *
- * This file is part of the lwIP TCP/IP stack.
- *
- * Author: Adam Dunkels <adam@sics.se>
- *
- */
+    Copyright (c) 2001-2004 Swedish Institute of Computer Science.
+    All rights reserved.
+
+    Redistribution and use in source and binary forms, with or without modification,
+    are permitted provided that the following conditions are met:
+
+    1. Redistributions of source code must retain the above copyright notice,
+      this list of conditions and the following disclaimer.
+    2. Redistributions in binary form must reproduce the above copyright notice,
+      this list of conditions and the following disclaimer in the documentation
+      and/or other materials provided with the distribution.
+    3. The name of the author may not be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+    WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+    MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+    SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+    EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+    OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+    INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+    CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+    IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
+    OF SUCH DAMAGE.
+
+    This file is part of the lwIP TCP/IP stack.
+
+    Author: Adam Dunkels <adam@sics.se>
+
+*/
 
 
 #ifndef LWIP_HDR_SOCKETS_H
@@ -52,13 +52,13 @@
 extern "C" {
 #endif
 
-/* If your port already typedef's sa_family_t, define SA_FAMILY_T_DEFINED
-   to prevent this code from redefining it. */
+/*  If your port already typedef's sa_family_t, define SA_FAMILY_T_DEFINED
+    to prevent this code from redefining it. */
 #if !defined(sa_family_t) && !defined(SA_FAMILY_T_DEFINED)
 typedef u8_t sa_family_t;
 #endif
-/* If your port already typedef's in_port_t, define IN_PORT_T_DEFINED
-   to prevent this code from redefining it. */
+/*  If your port already typedef's in_port_t, define IN_PORT_T_DEFINED
+    to prevent this code from redefining it. */
 #if !defined(in_port_t) && !defined(IN_PORT_T_DEFINED)
 typedef u16_t in_port_t;
 #endif
@@ -66,44 +66,44 @@ typedef u16_t in_port_t;
 #if LWIP_IPV4
 /* members are in network byte order */
 struct sockaddr_in {
-  u8_t            sin_len;
-  sa_family_t     sin_family;
-  in_port_t       sin_port;
-  struct in_addr  sin_addr;
+    u8_t            sin_len;
+    sa_family_t     sin_family;
+    in_port_t       sin_port;
+    struct in_addr  sin_addr;
 #define SIN_ZERO_LEN 8
-  char            sin_zero[SIN_ZERO_LEN];
+    char            sin_zero[SIN_ZERO_LEN];
 };
 #endif /* LWIP_IPV4 */
 
 #if LWIP_IPV6
 struct sockaddr_in6 {
-  u8_t            sin6_len;      /* length of this structure    */
-  sa_family_t     sin6_family;   /* AF_INET6                    */
-  in_port_t       sin6_port;     /* Transport layer port #      */
-  u32_t           sin6_flowinfo; /* IPv6 flow information       */
-  struct in6_addr sin6_addr;     /* IPv6 address                */
-  u32_t           sin6_scope_id; /* Set of interfaces for scope */
+    u8_t            sin6_len;      /* length of this structure    */
+    sa_family_t     sin6_family;   /* AF_INET6                    */
+    in_port_t       sin6_port;     /* Transport layer port #      */
+    u32_t           sin6_flowinfo; /* IPv6 flow information       */
+    struct in6_addr sin6_addr;     /* IPv6 address                */
+    u32_t           sin6_scope_id; /* Set of interfaces for scope */
 };
 #endif /* LWIP_IPV6 */
 
 struct sockaddr {
-  u8_t        sa_len;
-  sa_family_t sa_family;
-  char        sa_data[14];
+    u8_t        sa_len;
+    sa_family_t sa_family;
+    char        sa_data[14];
 };
 
 struct sockaddr_storage {
-  u8_t        s2_len;
-  sa_family_t ss_family;
-  char        s2_data1[2];
-  u32_t       s2_data2[3];
-#if LWIP_IPV6
-  u32_t       s2_data3[3];
-#endif /* LWIP_IPV6 */
+    u8_t        s2_len;
+    sa_family_t ss_family;
+    char        s2_data1[2];
+    u32_t       s2_data2[3];
+    #if LWIP_IPV6
+    u32_t       s2_data3[3];
+    #endif /* LWIP_IPV6 */
 };
 
-/* If your port already typedef's socklen_t, define SOCKLEN_T_DEFINED
-   to prevent this code from redefining it. */
+/*  If your port already typedef's socklen_t, define SOCKLEN_T_DEFINED
+    to prevent this code from redefining it. */
 #if !defined(socklen_t) && !defined(SOCKLEN_T_DEFINED)
 typedef size_t socklen_t;
 #endif
@@ -115,48 +115,48 @@ struct lwip_sock;
 #define LWIP_SETGETSOCKOPT_MAXOPTLEN 16
 
 /** This struct is used to pass data to the set/getsockopt_internal
- * functions running in tcpip_thread context (only a void* is allowed) */
+    functions running in tcpip_thread context (only a void* is allowed) */
 struct lwip_setgetsockopt_data {
-  /** socket index for which to change options */
-  int s;
-  /** level of the option to process */
-  int level;
-  /** name of the option to process */
-  int optname;
-  /** set: value to set the option to
-    * get: value of the option is stored here */
-#if LWIP_MPU_COMPATIBLE
-  u8_t optval[LWIP_SETGETSOCKOPT_MAXOPTLEN];
-#else
-  union {
-     void *p;
-     const void *pc;
-  } optval;
-#endif
-  /** size of *optval */
-  socklen_t optlen;
-  /** if an error occurs, it is temporarily stored here */
-  err_t err;
-  /** semaphore to wake up the calling task */
-  void* completed_sem;
+    /** socket index for which to change options */
+    int s;
+    /** level of the option to process */
+    int level;
+    /** name of the option to process */
+    int optname;
+    /** set: value to set the option to
+        get: value of the option is stored here */
+    #if LWIP_MPU_COMPATIBLE
+    u8_t optval[LWIP_SETGETSOCKOPT_MAXOPTLEN];
+    #else
+    union {
+        void* p;
+        const void* pc;
+    } optval;
+    #endif
+    /** size of *optval */
+    socklen_t optlen;
+    /** if an error occurs, it is temporarily stored here */
+    err_t err;
+    /** semaphore to wake up the calling task */
+    void* completed_sem;
 };
 #endif /* !LWIP_TCPIP_CORE_LOCKING */
 
 #if !defined(iovec)
 struct iovec {
-  void  *iov_base;
-  size_t iov_len;
+    void*  iov_base;
+    size_t iov_len;
 };
 #endif
 
 struct msghdr {
-  void         *msg_name;
-  socklen_t     msg_namelen;
-  struct iovec *msg_iov;
-  int           msg_iovlen;
-  void         *msg_control;
-  socklen_t     msg_controllen;
-  int           msg_flags;
+    void*         msg_name;
+    socklen_t     msg_namelen;
+    struct iovec* msg_iov;
+    int           msg_iovlen;
+    void*         msg_control;
+    socklen_t     msg_controllen;
+    int           msg_flags;
 };
 
 /* Socket protocol types (TCP/UDP/RAW) */
@@ -165,16 +165,16 @@ struct msghdr {
 #define SOCK_RAW        3
 
 /*
- * Option flags per-socket. These must match the SOF_ flags in ip.h (checked in init.c)
- */
+    Option flags per-socket. These must match the SOF_ flags in ip.h (checked in init.c)
+*/
 #define SO_REUSEADDR   0x0004 /* Allow local address reuse */
 #define SO_KEEPALIVE   0x0008 /* keep connections alive */
 #define SO_BROADCAST   0x0020 /* permit to send and to receive broadcast messages (see IP_SOF_BROADCAST option) */
 
 
 /*
- * Additional options, not kept in so_options.
- */
+    Additional options, not kept in so_options.
+*/
 #define SO_DEBUG       0x0001 /* Unimplemented: turn on debugging info recording */
 #define SO_ACCEPTCONN  0x0002 /* socket has had listen() */
 #define SO_DONTROUTE   0x0010 /* Unimplemented: just use interface addresses */
@@ -196,16 +196,16 @@ struct msghdr {
 
 
 /*
- * Structure used for manipulating linger option.
- */
+    Structure used for manipulating linger option.
+*/
 struct linger {
-       int l_onoff;                /* option on/off */
-       int l_linger;               /* linger time in seconds */
+    int l_onoff;                /* option on/off */
+    int l_linger;               /* linger time in seconds */
 };
 
 /*
- * Level number for (get/set)sockopt() to apply to socket itself.
- */
+    Level number for (get/set)sockopt() to apply to socket itself.
+*/
 #define  SOL_SOCKET  0xfff    /* options for socket level */
 
 
@@ -240,15 +240,15 @@ struct linger {
 
 
 /*
- * Options for level IPPROTO_IP
- */
+    Options for level IPPROTO_IP
+*/
 #define IP_TOS             1
 #define IP_TTL             2
 
 #if LWIP_TCP
 /*
- * Options for level IPPROTO_TCP
- */
+    Options for level IPPROTO_TCP
+*/
 #define TCP_NODELAY    0x01    /* don't delay send to coalesce packets */
 #define TCP_KEEPALIVE  0x02    /* send KEEPALIVE probes when idle for pcb->keep_idle milliseconds */
 #define TCP_KEEPIDLE   0x03    /* set pcb->keep_idle  - Same as TCP_KEEPALIVE, but use seconds for get/setsockopt */
@@ -258,8 +258,8 @@ struct linger {
 
 #if LWIP_IPV6
 /*
- * Options for level IPPROTO_IPV6
- */
+    Options for level IPPROTO_IPV6
+*/
 #define IPV6_CHECKSUM       7  /* RFC3542: calculate and insert the ICMPv6 checksum for raw sockets. */
 #define IPV6_V6ONLY         27 /* RFC3493: boolean control to restrict AF_INET6 sockets to IPv6 communications only. */
 
@@ -289,8 +289,8 @@ typedef struct ip6_mreq {
 
 #if LWIP_UDP && LWIP_UDPLITE
 /*
- * Options for level IPPROTO_UDPLITE
- */
+    Options for level IPPROTO_UDPLITE
+*/
 #define UDPLITE_SEND_CSCOV 0x01 /* sender checksum coverage */
 #define UDPLITE_RECV_CSCOV 0x02 /* minimal receiver checksum coverage */
 #endif /* LWIP_UDP && LWIP_UDPLITE*/
@@ -298,8 +298,8 @@ typedef struct ip6_mreq {
 
 #if LWIP_MULTICAST_TX_OPTIONS
 /*
- * Options and types for UDP multicast traffic handling
- */
+    Options and types for UDP multicast traffic handling
+*/
 #define IP_MULTICAST_TTL   5
 #define IP_MULTICAST_IF    6
 #define IP_MULTICAST_LOOP  7
@@ -307,8 +307,8 @@ typedef struct ip6_mreq {
 
 #if LWIP_IGMP
 /*
- * Options and types related to multicast membership
- */
+    Options and types related to multicast membership
+*/
 #define IP_ADD_MEMBERSHIP  3
 #define IP_DROP_MEMBERSHIP 4
 
@@ -319,21 +319,21 @@ typedef struct ip_mreq {
 #endif /* LWIP_IGMP */
 
 /*
- * The Type of Service provides an indication of the abstract
- * parameters of the quality of service desired.  These parameters are
- * to be used to guide the selection of the actual service parameters
- * when transmitting a datagram through a particular network.  Several
- * networks offer service precedence, which somehow treats high
- * precedence traffic as more important than other traffic (generally
- * by accepting only traffic above a certain precedence at time of high
- * load).  The major choice is a three way tradeoff between low-delay,
- * high-reliability, and high-throughput.
- * The use of the Delay, Throughput, and Reliability indications may
- * increase the cost (in some sense) of the service.  In many networks
- * better performance for one of these parameters is coupled with worse
- * performance on another.  Except for very unusual cases at most two
- * of these three indications should be set.
- */
+    The Type of Service provides an indication of the abstract
+    parameters of the quality of service desired.  These parameters are
+    to be used to guide the selection of the actual service parameters
+    when transmitting a datagram through a particular network.  Several
+    networks offer service precedence, which somehow treats high
+    precedence traffic as more important than other traffic (generally
+    by accepting only traffic above a certain precedence at time of high
+    load).  The major choice is a three way tradeoff between low-delay,
+    high-reliability, and high-throughput.
+    The use of the Delay, Throughput, and Reliability indications may
+    increase the cost (in some sense) of the service.  In many networks
+    better performance for one of these parameters is coupled with worse
+    performance on another.  Except for very unusual cases at most two
+    of these three indications should be set.
+*/
 #define IPTOS_TOS_MASK          0x1E
 #define IPTOS_TOS(tos)          ((tos) & IPTOS_TOS_MASK)
 #define IPTOS_LOWDELAY          0x10
@@ -343,14 +343,14 @@ typedef struct ip_mreq {
 #define IPTOS_MINCOST           IPTOS_LOWCOST
 
 /*
- * The Network Control precedence designation is intended to be used
- * within a network only.  The actual use and control of that
- * designation is up to each network. The Internetwork Control
- * designation is intended for use by gateway control originators only.
- * If the actual use of these precedence designations is of concern to
- * a particular network, it is the responsibility of that network to
- * control the access to, and use of, those precedence designations.
- */
+    The Network Control precedence designation is intended to be used
+    within a network only.  The actual use and control of that
+    designation is up to each network. The Internetwork Control
+    designation is intended for use by gateway control originators only.
+    If the actual use of these precedence designations is of concern to
+    a particular network, it is the responsibility of that network to
+    control the access to, and use of, those precedence designations.
+*/
 #define IPTOS_PREC_MASK                 0xe0
 #define IPTOS_PREC(tos)                ((tos) & IPTOS_PREC_MASK)
 #define IPTOS_PREC_NETCONTROL           0xe0
@@ -364,23 +364,23 @@ typedef struct ip_mreq {
 
 
 /*
- * Commands for ioctlsocket(),  taken from the BSD file fcntl.h.
- * lwip_ioctl only supports FIONREAD and FIONBIO, for now
- *
- * Ioctl's have the command encoded in the lower word,
- * and the size of any in or out parameters in the upper
- * word.  The high 2 bits of the upper word are used
- * to encode the in/out status of the parameter; for now
- * we restrict parameters to at most 128 bytes.
- */
+    Commands for ioctlsocket(),  taken from the BSD file fcntl.h.
+    lwip_ioctl only supports FIONREAD and FIONBIO, for now
+
+    Ioctl's have the command encoded in the lower word,
+    and the size of any in or out parameters in the upper
+    word.  The high 2 bits of the upper word are used
+    to encode the in/out status of the parameter; for now
+    we restrict parameters to at most 128 bytes.
+*/
 #if !defined(FIONREAD) || !defined(FIONBIO)
 #define IOCPARM_MASK    0x7fU           /* parameters must be < 128 bytes */
 #define IOC_VOID        0x20000000UL    /* no parameters */
 #define IOC_OUT         0x40000000UL    /* copy out parameters */
 #define IOC_IN          0x80000000UL    /* copy in parameters */
 #define IOC_INOUT       (IOC_IN|IOC_OUT)
-                                        /* 0x20000000 distinguishes new &
-                                           old ioctl's */
+/*  0x20000000 distinguishes new &
+    old ioctl's */
 #define _IO(x,y)        (IOC_VOID|((x)<<8)|(y))
 
 #define _IOR(x,y,t)     (IOC_OUT|(((long)sizeof(t)&IOCPARM_MASK)<<16)|((x)<<8)|(y))
@@ -412,8 +412,8 @@ typedef struct ip_mreq {
 #define F_SETFL 4
 #endif
 
-/* File status flags and file access modes for fnctl,
-   these are bits in an int. */
+/*  File status flags and file access modes for fnctl,
+    these are bits in an int. */
 #ifndef O_NONBLOCK
 #define O_NONBLOCK  1 /* nonblocking I/O */
 #endif
@@ -422,9 +422,9 @@ typedef struct ip_mreq {
 #endif
 
 #ifndef SHUT_RD
-  #define SHUT_RD   0
-  #define SHUT_WR   1
-  #define SHUT_RDWR 2
+#define SHUT_RD   0
+#define SHUT_WR   1
+#define SHUT_RDWR 2
 #endif
 
 /* FD_SET used for lwip_select */
@@ -433,32 +433,31 @@ typedef struct ip_mreq {
 /* Make FD_SETSIZE match NUM_SOCKETS in socket.c */
 #define FD_SETSIZE    MEMP_NUM_NETCONN
 #define FDSETSAFESET(n, code) do { \
-  if (((n) - LWIP_SOCKET_OFFSET < MEMP_NUM_NETCONN) && (((int)(n) - LWIP_SOCKET_OFFSET) >= 0)) { \
-  code; }} while(0)
+        if (((n) - LWIP_SOCKET_OFFSET < MEMP_NUM_NETCONN) && (((int)(n) - LWIP_SOCKET_OFFSET) >= 0)) { \
+            code; }} while(0)
 #define FDSETSAFEGET(n, code) (((n) - LWIP_SOCKET_OFFSET < MEMP_NUM_NETCONN) && (((int)(n) - LWIP_SOCKET_OFFSET) >= 0) ?\
-  (code) : 0)
+                               (code) : 0)
 #define FD_SET(n, p)  FDSETSAFESET(n, (p)->fd_bits[((n)-LWIP_SOCKET_OFFSET)/8] |=  (1 << (((n)-LWIP_SOCKET_OFFSET) & 7)))
 #define FD_CLR(n, p)  FDSETSAFESET(n, (p)->fd_bits[((n)-LWIP_SOCKET_OFFSET)/8] &= ~(1 << (((n)-LWIP_SOCKET_OFFSET) & 7)))
 #define FD_ISSET(n,p) FDSETSAFEGET(n, (p)->fd_bits[((n)-LWIP_SOCKET_OFFSET)/8] &   (1 << (((n)-LWIP_SOCKET_OFFSET) & 7)))
 #define FD_ZERO(p)    memset((void*)(p), 0, sizeof(*(p)))
 
-typedef struct fd_set
-{
-  unsigned char fd_bits [(FD_SETSIZE+7)/8];
+typedef struct fd_set {
+    unsigned char fd_bits [(FD_SETSIZE + 7) / 8];
 } fd_set;
 
 #endif /* FD_SET */
 
 /** LWIP_TIMEVAL_PRIVATE: if you want to use the struct timeval provided
- * by your system, set this to 0 and include <sys/time.h> in cc.h */
+    by your system, set this to 0 and include <sys/time.h> in cc.h */
 #ifndef LWIP_TIMEVAL_PRIVATE
 #define LWIP_TIMEVAL_PRIVATE 1
 #endif
 
 #if LWIP_TIMEVAL_PRIVATE
 struct timeval {
-  long    tv_sec;         /* seconds */
-  long    tv_usec;        /* and microseconds */
+    long    tv_sec;         /* seconds */
+    long    tv_usec;        /* and microseconds */
 };
 #endif /* LWIP_TIMEVAL_PRIVATE */
 
@@ -470,73 +469,94 @@ void lwip_socket_thread_cleanup(void); /* LWIP_NETCONN_SEM_PER_THREAD==1: destro
 #if LWIP_COMPAT_SOCKETS != 2
 
 #if ESP_THREAD_SAFE
-int atu_accept_r(int s, struct sockaddr *addr, socklen_t *addrlen);
-int atu_bind_r(int s, const struct sockaddr *name, socklen_t namelen);
+int atu_accept_r(int s, struct sockaddr* addr, socklen_t* addrlen);
+int atu_bind_r(int s, const struct sockaddr* name, socklen_t namelen);
 int lwip_shutdown_r(int s, int how);
-int atu_getpeername_r (int s, struct sockaddr *name, socklen_t *namelen);
-int lwip_getsockname_r (int s, struct sockaddr *name, socklen_t *namelen);
-int atu_getsockopt_r (int s, int level, int optname, void *optval, socklen_t *optlen);
-int atu_setsockopt_r (int s, int level, int optname, const void *optval, socklen_t optlen);
+int atu_getpeername_r(int s, struct sockaddr* name, socklen_t* namelen);
+int lwip_getsockname_r(int s, struct sockaddr* name, socklen_t* namelen);
+int atu_getsockopt_r(int s, int level, int optname, void* optval, socklen_t* optlen);
+int atu_setsockopt_r(int s, int level, int optname, const void* optval, socklen_t optlen);
 int atu_close_r(int s);
-int atu_connect_r(int s, const struct sockaddr *name, socklen_t namelen);
+int atu_connect_r(int s, const struct sockaddr* name, socklen_t namelen);
 int atu_listen_r(int s, int backlog);
-int lwip_recvmsg_r(int s, struct msghdr *message, int flags);
-int atu_recv_r(int s, void *mem, size_t len, int flags);
-int lwip_read_r(int s, void *mem, size_t len); 
-int atu_recvfrom_r(int s, void *mem, size_t len, int flags,
-      struct sockaddr *from, socklen_t *fromlen);
-int atu_send_r(int s, const void *dataptr, size_t size, int flags);
-int lwip_sendmsg_r(int s, const struct msghdr *message, int flags);
-int atu_sendto_r(int s, const void *dataptr, size_t size, int flags,
-    const struct sockaddr *to, socklen_t tolen);
+int lwip_recvmsg_r(int s, struct msghdr* message, int flags);
+int atu_recv_r(int s, void* mem, size_t len, int flags);
+int lwip_read_r(int s, void* mem, size_t len);
+int atu_recvfrom_r(int s, void* mem, size_t len, int flags,
+                   struct sockaddr* from, socklen_t* fromlen);
+int atu_send_r(int s, const void* dataptr, size_t size, int flags);
+int lwip_sendmsg_r(int s, const struct msghdr* message, int flags);
+int atu_sendto_r(int s, const void* dataptr, size_t size, int flags,
+                 const struct sockaddr* to, socklen_t tolen);
 int atu_socket(int domain, int type, int protocol);
-int lwip_write_r(int s, const void *dataptr, size_t size);
-int lwip_writev_r(int s, const struct iovec *iov, int iovcnt);
-int atu_select(int nfds, fd_set *readset, fd_set *writeset, fd_set *exceptset,
-                struct timeval *timeout);
-int atu_ioctl_r(int s, long cmd, void *argp);
+int lwip_write_r(int s, const void* dataptr, size_t size);
+int lwip_writev_r(int s, const struct iovec* iov, int iovcnt);
+int atu_select(int nfds, fd_set* readset, fd_set* writeset, fd_set* exceptset,
+               struct timeval* timeout);
+int atu_ioctl_r(int s, long cmd, void* argp);
 int atu_fcntl_r(int s, int cmd, int val);
 
-static inline int accept(int s,struct sockaddr *addr,socklen_t *addrlen)
-{ return atu_accept_r(s,addr,addrlen); }
-static inline int bind(int s,const struct sockaddr *name, socklen_t namelen)
-{ return atu_bind_r(s,name,namelen); }
-static inline int shutdown(int s,int how)
-{ return lwip_shutdown_r(s,how); }
-static inline int getpeername(int s,struct sockaddr *name,socklen_t *namelen)
-{ return atu_getpeername_r(s,name,namelen); }
-static inline int getsockname(int s,struct sockaddr *name,socklen_t *namelen)
-{ return lwip_getsockname_r(s,name,namelen); }
-static inline int setsockopt(int s,int level,int optname,const void *opval,socklen_t optlen)
-{ return atu_setsockopt_r(s,level,optname,opval,optlen); }
-static inline int getsockopt(int s,int level,int optname,void *opval,socklen_t *optlen)
-{ return atu_getsockopt_r(s,level,optname,opval,optlen); }
-static inline int closesocket(int s)
-{ return atu_close_r(s); }
-static inline int connect(int s,const struct sockaddr *name,socklen_t namelen)
-{ return atu_connect_r(s,name,namelen); }
-static inline int listen(int s,int backlog)
-{ return atu_listen_r(s,backlog); }
-static inline int recvmsg(int sockfd, struct msghdr *msg, int flags)
-{ return lwip_recvmsg_r(sockfd, msg, flags); } 
-static inline int recv(int s,void *mem,size_t len,int flags)
-{ return atu_recv_r(s,mem,len,flags); }
-static inline int recvfrom(int s,void *mem,size_t len,int flags,struct sockaddr *from,socklen_t *fromlen)
-{ return atu_recvfrom_r(s,mem,len,flags,from,fromlen); }
-static inline int send(int s,const void *dataptr,size_t size,int flags)
-{ return atu_send_r(s,dataptr,size,flags); }
-static inline int sendmsg(int s,const struct msghdr *message,int flags)
-{ return lwip_sendmsg_r(s,message,flags); }
-static inline int sendto(int s,const void *dataptr,size_t size,int flags,const struct sockaddr *to,socklen_t tolen)
-{ return atu_sendto_r(s,dataptr,size,flags,to,tolen); }
-static inline int socket(int domain,int type,int protocol)
-{ return atu_socket(domain,type,protocol); }
-static inline int select(int nfds,fd_set *readset,fd_set *writeset,fd_set *exceptset,struct timeval *timeout)
-{ return atu_select(nfds,readset,writeset,exceptset,timeout); }
-static inline int ioctlsocket(int s,long cmd,void *argp)
-{ return atu_ioctl_r(s,cmd,argp); }
-static inline int fcntlsocket(int s, int cmd, int val)
-{ return atu_fcntl_r(s,cmd,val); }
+static inline int accept(int s, struct sockaddr* addr, socklen_t* addrlen) {
+    return atu_accept_r(s, addr, addrlen);
+}
+static inline int bind(int s, const struct sockaddr* name, socklen_t namelen) {
+    return atu_bind_r(s, name, namelen);
+}
+static inline int shutdown(int s, int how) {
+    return lwip_shutdown_r(s, how);
+}
+static inline int getpeername(int s, struct sockaddr* name, socklen_t* namelen) {
+    return atu_getpeername_r(s, name, namelen);
+}
+static inline int getsockname(int s, struct sockaddr* name, socklen_t* namelen) {
+    return lwip_getsockname_r(s, name, namelen);
+}
+static inline int setsockopt(int s, int level, int optname, const void* opval, socklen_t optlen) {
+    return atu_setsockopt_r(s, level, optname, opval, optlen);
+}
+static inline int getsockopt(int s, int level, int optname, void* opval, socklen_t* optlen) {
+    return atu_getsockopt_r(s, level, optname, opval, optlen);
+}
+static inline int closesocket(int s) {
+    return atu_close_r(s);
+}
+static inline int connect(int s, const struct sockaddr* name, socklen_t namelen) {
+    return atu_connect_r(s, name, namelen);
+}
+static inline int listen(int s, int backlog) {
+    return atu_listen_r(s, backlog);
+}
+static inline int recvmsg(int sockfd, struct msghdr* msg, int flags) {
+    return lwip_recvmsg_r(sockfd, msg, flags);
+}
+static inline int recv(int s, void* mem, size_t len, int flags) {
+    return atu_recv_r(s, mem, len, flags);
+}
+static inline int recvfrom(int s, void* mem, size_t len, int flags, struct sockaddr* from, socklen_t* fromlen) {
+    return atu_recvfrom_r(s, mem, len, flags, from, fromlen);
+}
+static inline int send(int s, const void* dataptr, size_t size, int flags) {
+    return atu_send_r(s, dataptr, size, flags);
+}
+static inline int sendmsg(int s, const struct msghdr* message, int flags) {
+    return lwip_sendmsg_r(s, message, flags);
+}
+static inline int sendto(int s, const void* dataptr, size_t size, int flags, const struct sockaddr* to,
+                         socklen_t tolen) {
+    return atu_sendto_r(s, dataptr, size, flags, to, tolen);
+}
+static inline int socket(int domain, int type, int protocol) {
+    return atu_socket(domain, type, protocol);
+}
+static inline int select(int nfds, fd_set* readset, fd_set* writeset, fd_set* exceptset, struct timeval* timeout) {
+    return atu_select(nfds, readset, writeset, exceptset, timeout);
+}
+static inline int ioctlsocket(int s, long cmd, void* argp) {
+    return atu_ioctl_r(s, cmd, argp);
+}
+static inline int fcntlsocket(int s, int cmd, int val) {
+    return atu_fcntl_r(s, cmd, val);
+}
 
 #endif /* ESP_THREAD_SAFE */
 #endif /* LWIP_COMPAT_SOCKETS != 2 */
@@ -545,10 +565,10 @@ static inline int fcntlsocket(int s, int cmd, int val)
 #if LWIP_IPV4 && LWIP_IPV6
 #define lwip_inet_ntop(af,src,dst,size) \
     (((af) == AF_INET6) ? ip6addr_ntoa_r((const ip6_addr_t*)(src),(dst),(size)) \
-    : (((af) == AF_INET) ? ip4addr_ntoa_r((const ip4_addr_t*)(src),(dst),(size)) : NULL))
+     : (((af) == AF_INET) ? ip4addr_ntoa_r((const ip4_addr_t*)(src),(dst),(size)) : NULL))
 #define lwip_inet_pton(af,src,dst) \
     (((af) == AF_INET6) ? ip6addr_aton((src),(ip6_addr_t*)(dst)) \
-    : (((af) == AF_INET) ? ip4addr_aton((src),(ip4_addr_t*)(dst)) : 0))
+     : (((af) == AF_INET) ? ip4addr_aton((src),(ip4_addr_t*)(dst)) : 0))
 #elif LWIP_IPV4 /* LWIP_IPV4 && LWIP_IPV6 */
 #define lwip_inet_ntop(af,src,dst,size) \
     (((af) == AF_INET) ? ip4addr_ntoa_r((const ip4_addr_t*)(src),(dst),(size)) : NULL)
@@ -560,18 +580,22 @@ static inline int fcntlsocket(int s, int cmd, int val)
 #define lwip_inet_pton(af,src,dst) \
     (((af) == AF_INET6) ? ip6addr_aton((src),(ip6_addr_t*)(dst)) : 0)
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
-                                                           
+
 #if LWIP_COMPAT_SOCKET_INET == 1
-/* Some libraries have problems with inet_... being macros, so please use this define 
-   to declare normal functions */
-static inline const char *inet_ntop(int af, const void *src, char *dst, socklen_t size)
-{ lwip_inet_ntop(af, src, dst, size);    return dst; }
-static inline int inet_pton(int af, const char *src, void *dst)
-{ lwip_inet_pton(af, src, dst); return 1; }   
+/*  Some libraries have problems with inet_... being macros, so please use this define
+    to declare normal functions */
+static inline const char* inet_ntop(int af, const void* src, char* dst, socklen_t size) {
+    lwip_inet_ntop(af, src, dst, size);
+    return dst;
+}
+static inline int inet_pton(int af, const char* src, void* dst) {
+    lwip_inet_pton(af, src, dst);
+    return 1;
+}
 #else
 /* By default fall back to original inet_... macros */
-# define inet_ntop(a,b,c,d) lwip_inet_ntop(a,b,c,d) 
-# define inet_pton(a,b,c)   lwip_inet_pton(a,b,c)   
+# define inet_ntop(a,b,c,d) lwip_inet_ntop(a,b,c,d)
+# define inet_pton(a,b,c)   lwip_inet_pton(a,b,c)
 #endif /* LWIP_COMPAT_SOCKET_INET */
 
 #else /* ESP_LWIP*/
