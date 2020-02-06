@@ -82,6 +82,7 @@ esp_err_t mdns_hostname_set(const char * hostname) {
  *     - ESP_ERR_NO_MEM memory error
  */
 esp_err_t mdns_instance_name_set(const char * instance_name) {
+	instance_name = instance_name;
 	printf("%s() L%d\r\n", __func__, __LINE__);
 	return ESP_OK;
 }
@@ -127,6 +128,8 @@ esp_err_t mdns_service_add(const char * instance_name, const char * service_type
  *     - ESP_FAIL unknown error
  */
 esp_err_t mdns_service_remove(const char * service_type, const char * proto) {
+	service_type = service_type;
+	proto = proto;
 	printf("%s() L%d\r\n", __func__, __LINE__);
 	return ESP_OK;
 }
@@ -144,6 +147,9 @@ esp_err_t mdns_service_remove(const char * service_type, const char * proto) {
  *     - ESP_ERR_NO_MEM memory error
  */
 esp_err_t mdns_service_instance_name_set(const char * service_type, const char * proto, const char * instance_name) {
+	service_type = service_type;
+	proto = proto;
+	instance_name = instance_name;
 	printf("%s() L%d\r\n", __func__, __LINE__);
 	return ESP_OK;
 }
@@ -160,6 +166,9 @@ esp_err_t mdns_service_instance_name_set(const char * service_type, const char *
  *     - ESP_ERR_NOT_FOUND Service not found
  */
 esp_err_t mdns_service_port_set(const char * service_type, const char * proto, uint16_t port) {
+	service_type = service_type;
+	proto = proto;
+	port = port;
 	printf("%s() L%d\r\n", __func__, __LINE__);
 	return ESP_OK;
 }
@@ -178,6 +187,10 @@ esp_err_t mdns_service_port_set(const char * service_type, const char * proto, u
  *     - ESP_ERR_NO_MEM memory error
  */
 esp_err_t mdns_service_txt_set(const char * service_type, const char * proto, mdns_txt_item_t txt[], uint8_t num_items) {
+	service_type = service_type;
+	proto = proto;
+	txt = txt;
+	num_items = num_items;
 	printf("%s() L%d\r\n", __func__, __LINE__);
 	return ESP_OK;
 }
@@ -196,6 +209,10 @@ esp_err_t mdns_service_txt_set(const char * service_type, const char * proto, md
  *     - ESP_ERR_NO_MEM memory error
  */
 esp_err_t mdns_service_txt_item_set(const char * service_type, const char * proto, const char * key, const char * value) {
+	service_type = service_type;
+	proto = proto;
+	key = key;
+	value = value;
 	printf("%s() L%d\r\n", __func__, __LINE__);
 	return ESP_OK;
 }
@@ -213,6 +230,9 @@ esp_err_t mdns_service_txt_item_set(const char * service_type, const char * prot
  *     - ESP_ERR_NO_MEM memory error
  */
 esp_err_t mdns_service_txt_item_remove(const char * service_type, const char * proto, const char * key) {
+	service_type = service_type;
+	proto = proto;
+	key = key;
 	printf("%s() L%d\r\n", __func__, __LINE__);
 	return ESP_OK;
 }
@@ -247,6 +267,13 @@ esp_err_t mdns_service_remove_all() {
  *     - ESP_ERR_INVALID_ARG    timeout was not given
  */
 esp_err_t mdns_query(const char * name, const char * service_type, const char * proto, uint16_t type, uint32_t timeout, size_t max_results, mdns_result_t ** results) {
+	name = name;
+	service_type = service_type;
+	proto = proto;
+	type = type;
+	timeout = timeout;
+	max_results = max_results;
+	results = results;
 	printf("%s() L%d\r\n", __func__, __LINE__);
 	return ESP_OK;
 }
@@ -256,6 +283,7 @@ esp_err_t mdns_query(const char * name, const char * service_type, const char * 
  * @param  results      linked list of results to be freed
  */
 void mdns_query_results_free(mdns_result_t * results) {
+	results = results;
 	printf("%s() L%d\r\n", __func__, __LINE__);
 	return ESP_OK;
 }
@@ -275,6 +303,11 @@ void mdns_query_results_free(mdns_result_t * results) {
  *     - ESP_ERR_INVALID_ARG    parameter error
  */
 esp_err_t mdns_query_ptr(const char * service_type, const char * proto, uint32_t timeout, size_t max_results, mdns_result_t ** results) {
+	service_type = service_type;
+	proto = proto;
+	timeout = timeout;
+	max_results = max_results;
+	results = results;
 	printf("%s() L%d\r\n", __func__, __LINE__);
 	return ESP_OK;
 }
@@ -294,6 +327,11 @@ esp_err_t mdns_query_ptr(const char * service_type, const char * proto, uint32_t
  *     - ESP_ERR_INVALID_ARG    parameter error
  */
 esp_err_t mdns_query_srv(const char * instance_name, const char * service_type, const char * proto, uint32_t timeout, mdns_result_t ** result) {
+	instance_name = instance_name;
+	service_type = service_type;
+	proto = proto;
+	timeout = timeout;
+	result = result;
 	printf("%s() L%d\r\n", __func__, __LINE__);
 	return ESP_OK;
 }
@@ -313,6 +351,11 @@ esp_err_t mdns_query_srv(const char * instance_name, const char * service_type, 
  *     - ESP_ERR_INVALID_ARG    parameter error
  */
 esp_err_t mdns_query_txt(const char * instance_name, const char * service_type, const char * proto, uint32_t timeout, mdns_result_t ** result) {
+	instance_name = instance_name;
+	service_type = service_type;
+	proto = proto;
+	timeout = timeout;
+	result = result;
 	printf("%s() L%d\r\n", __func__, __LINE__);
 	return ESP_OK;
 }
@@ -330,6 +373,9 @@ esp_err_t mdns_query_txt(const char * instance_name, const char * service_type, 
  *     - ESP_ERR_INVALID_ARG    parameter error
  */
 esp_err_t mdns_query_a(const char * host_name, uint32_t timeout, ip4_addr_t * addr) {
+	host_name = host_name;
+	timeout = timeout;
+	addr = addr;
 	printf("%s() L%d\r\n", __func__, __LINE__);
 	return ESP_OK;
 }
@@ -347,6 +393,9 @@ esp_err_t mdns_query_a(const char * host_name, uint32_t timeout, ip4_addr_t * ad
  *     - ESP_ERR_INVALID_ARG    parameter error
  */
 esp_err_t mdns_query_aaaa(const char * host_name, uint32_t timeout, ip6_addr_t * addr) {
+	host_name = host_name;
+	timeout = timeout;
+	addr = addr;
 	printf("%s() L%d\r\n", __func__, __LINE__);
 	return ESP_OK;
 }
@@ -359,6 +408,8 @@ esp_err_t mdns_query_aaaa(const char * host_name, uint32_t timeout, ip6_addr_t *
  * @param  event        The system event
  */
 esp_err_t mdns_handle_system_event(void *ctx, system_event_t *event) {
+	ctx = ctx;
+	event = event;
 	printf("%s() L%d\r\n", __func__, __LINE__);
 	return ESP_OK;
 }

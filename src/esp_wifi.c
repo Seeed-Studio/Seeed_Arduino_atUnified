@@ -79,6 +79,7 @@
   *    - others: refer to error code esp_err.h
   */
 esp_err_t esp_wifi_init(const wifi_init_config_t *config) {
+	config = config;
 	return ESP_OK;
 }
 
@@ -236,6 +237,7 @@ esp_err_t esp_wifi_disconnect(void) {
   */
 esp_err_t esp_wifi_clear_fast_connect(void) {
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 /**
@@ -251,7 +253,9 @@ esp_err_t esp_wifi_clear_fast_connect(void) {
   *    - ESP_ERR_WIFI_MODE: WiFi mode is wrong
   */
 esp_err_t esp_wifi_deauth_sta(uint16_t aid) {
+	aid = aid;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 
@@ -404,7 +408,9 @@ esp_err_t esp_wifi_sta_get_ap_info(wifi_ap_record_t *ap_info) {
   * @return    ESP_OK: succeed
   */
 esp_err_t esp_wifi_set_ps(wifi_ps_type_t type) {
+	type = type;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 /**
@@ -417,7 +423,9 @@ esp_err_t esp_wifi_set_ps(wifi_ps_type_t type) {
   * @return    ESP_OK: succeed
   */
 esp_err_t esp_wifi_get_ps(wifi_ps_type_t *type) {
+	type = type;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 /**
@@ -436,7 +444,10 @@ esp_err_t esp_wifi_get_ps(wifi_ps_type_t *type) {
   *    - others: refer to error codes in esp_err.h
   */
 esp_err_t esp_wifi_set_protocol(wifi_interface_t ifx, uint8_t protocol_bitmap) {
+	ifx = ifx;
+	protocol_bitmap = protocol_bitmap;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 /**
@@ -453,7 +464,10 @@ esp_err_t esp_wifi_set_protocol(wifi_interface_t ifx, uint8_t protocol_bitmap) {
   *    - others: refer to error codes in esp_err.h
   */
 esp_err_t esp_wifi_get_protocol(wifi_interface_t ifx, uint8_t *protocol_bitmap) {
+	ifx = ifx;
+	protocol_bitmap = protocol_bitmap;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 /**
@@ -473,7 +487,10 @@ esp_err_t esp_wifi_get_protocol(wifi_interface_t ifx, uint8_t *protocol_bitmap) 
   *    - others: refer to error codes in esp_err.h
   */
 esp_err_t esp_wifi_set_bandwidth(wifi_interface_t ifx, wifi_bandwidth_t bw) {
+	ifx = ifx;
+	bw = bw;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 /**
@@ -491,7 +508,10 @@ esp_err_t esp_wifi_set_bandwidth(wifi_interface_t ifx, wifi_bandwidth_t bw) {
   *    - ESP_ERR_INVALID_ARG: invalid argument
   */
 esp_err_t esp_wifi_get_bandwidth(wifi_interface_t ifx, wifi_bandwidth_t *bw) {
+	ifx = ifx;
+	bw = bw;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 /**
@@ -510,6 +530,8 @@ esp_err_t esp_wifi_get_bandwidth(wifi_interface_t ifx, wifi_bandwidth_t *bw) {
   *    - ESP_ERR_INVALID_ARG: invalid argument
   */
 esp_err_t esp_wifi_set_channel(uint8_t primary, wifi_second_chan_t second) {
+	primary = primary;
+	second = second;
 	printf("%s() L%d\r\n", __func__, __LINE__);
 
 	// Not implemented.
@@ -530,6 +552,7 @@ esp_err_t esp_wifi_set_channel(uint8_t primary, wifi_second_chan_t second) {
   *    - ESP_ERR_INVALID_ARG: invalid argument
   */
 esp_err_t esp_wifi_get_channel(uint8_t *primary, wifi_second_chan_t *second) {
+	second = second;
 	printf("%s() L%d\r\n", __func__, __LINE__);
 
 	// Not implemented.
@@ -562,7 +585,9 @@ esp_err_t esp_wifi_get_channel(uint8_t *primary, wifi_second_chan_t *second) {
   *    - ESP_ERR_INVALID_ARG: invalid argument
   */
 esp_err_t esp_wifi_set_country(const wifi_country_t *country) {
+	country = country;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 /**
@@ -576,7 +601,9 @@ esp_err_t esp_wifi_set_country(const wifi_country_t *country) {
   *    - ESP_ERR_INVALID_ARG: invalid argument
   */
 esp_err_t esp_wifi_get_country(wifi_country_t *country) {
+	country = country;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 
@@ -601,8 +628,10 @@ esp_err_t esp_wifi_get_country(wifi_country_t *country) {
   *    - others: refer to error codes in esp_err.h
   */
 esp_err_t esp_wifi_set_mac(wifi_interface_t ifx, const uint8_t mac[6]) {
+	ifx = ifx;
 	printf("%s() L%d\r\n", __func__, __LINE__);
 	// esp_sta_setmac
+	return ESP_OK;
 }
 
 /**
@@ -618,8 +647,11 @@ esp_err_t esp_wifi_set_mac(wifi_interface_t ifx, const uint8_t mac[6]) {
   *    - ESP_ERR_WIFI_IF: invalid interface
   */
 esp_err_t esp_wifi_get_mac(wifi_interface_t ifx, uint8_t mac[6]) {
+	ifx = ifx;
+	mac[0] = mac[0];
 	printf("%s() L%d\r\n", __func__, __LINE__);
 	// esp_sta_getmac
+	return ESP_OK;
 }
 
 /**
@@ -634,7 +666,9 @@ esp_err_t esp_wifi_get_mac(wifi_interface_t ifx, uint8_t mac[6]) {
   *    - ESP_ERR_WIFI_NOT_INIT: WiFi is not initialized by esp_wifi_init
   */
 esp_err_t esp_wifi_set_promiscuous_rx_cb(wifi_promiscuous_cb_t cb) {
+	cb = cb;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 /**
@@ -647,7 +681,9 @@ esp_err_t esp_wifi_set_promiscuous_rx_cb(wifi_promiscuous_cb_t cb) {
   *    - ESP_ERR_WIFI_NOT_INIT: WiFi is not initialized by esp_wifi_init
   */
 esp_err_t esp_wifi_set_promiscuous(bool en) {
+	en = en;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 /**
@@ -661,7 +697,9 @@ esp_err_t esp_wifi_set_promiscuous(bool en) {
   *    - ESP_ERR_INVALID_ARG: invalid argument
   */
 esp_err_t esp_wifi_get_promiscuous(bool *en) {
+	en = en;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 /**
@@ -676,7 +714,9 @@ esp_err_t esp_wifi_get_promiscuous(bool *en) {
   *    - ESP_ERR_WIFI_NOT_INIT: WiFi is not initialized by esp_wifi_init
   */
 esp_err_t esp_wifi_set_promiscuous_filter(const wifi_promiscuous_filter_t *filter) {
+	filter = filter;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 /**
@@ -690,7 +730,9 @@ esp_err_t esp_wifi_set_promiscuous_filter(const wifi_promiscuous_filter_t *filte
   *    - ESP_ERR_INVALID_ARG: invalid argument
   */
 esp_err_t esp_wifi_get_promiscuous_filter(wifi_promiscuous_filter_t *filter) {
+	filter = filter;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 /**
@@ -705,7 +747,9 @@ esp_err_t esp_wifi_get_promiscuous_filter(wifi_promiscuous_filter_t *filter) {
   *    - ESP_ERR_WIFI_NOT_INIT: WiFi is not initialized by esp_wifi_init
   */
 esp_err_t esp_wifi_set_promiscuous_ctrl_filter(const wifi_promiscuous_filter_t *filter) {
+	filter = filter;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 /**
@@ -719,7 +763,9 @@ esp_err_t esp_wifi_set_promiscuous_ctrl_filter(const wifi_promiscuous_filter_t *
   *    - ESP_ERR_WIFI_ARG: invalid argument
   */
 esp_err_t esp_wifi_get_promiscuous_ctrl_filter(wifi_promiscuous_filter_t *filter) {
+	filter = filter;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 /**
@@ -827,7 +873,9 @@ esp_err_t esp_wifi_get_config(wifi_interface_t interface, wifi_config_t *conf) {
   *    - ESP_ERR_WIFI_CONN: WiFi internal error, the station/soft-AP control block is invalid
   */
 esp_err_t esp_wifi_ap_get_sta_list(wifi_sta_list_t *sta) {
+	sta = sta;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 
@@ -844,7 +892,9 @@ esp_err_t esp_wifi_ap_get_sta_list(wifi_sta_list_t *sta) {
   *   - ESP_ERR_INVALID_ARG: invalid argument
   */
 esp_err_t esp_wifi_set_storage(wifi_storage_t storage) {
+	storage = storage;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 /**
@@ -860,6 +910,7 @@ esp_err_t esp_wifi_set_storage(wifi_storage_t storage) {
   *    - others: refer to error code in esp_err.h
   */
 esp_err_t esp_wifi_set_auto_connect(bool en) {
+	en = en;
 	printf("%s() L%d\r\n", __func__, __LINE__);
 	return ESP_OK;
 }
@@ -875,7 +926,9 @@ esp_err_t esp_wifi_set_auto_connect(bool en) {
   *    - ESP_ERR_INVALID_ARG: invalid argument
   */
 esp_err_t esp_wifi_get_auto_connect(bool *en) {
+	en = en;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 /**
@@ -895,7 +948,12 @@ esp_err_t esp_wifi_get_auto_connect(bool *en) {
   *    - ESP_ERR_NO_MEM: Out of memory
   */
 esp_err_t esp_wifi_set_vendor_ie(bool enable, wifi_vendor_ie_type_t type, wifi_vendor_ie_id_t idx, const void *vnd_ie) {
+	enable = enable;
+	type = type;
+	idx = idx;
+	vnd_ie = vnd_ie;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 /**
@@ -909,7 +967,10 @@ esp_err_t esp_wifi_set_vendor_ie(bool enable, wifi_vendor_ie_type_t type, wifi_v
   *    - ESP_ERR_WIFI_NOT_INIT: WiFi is not initialized by esp_wifi_init
   */
 esp_err_t esp_wifi_set_vendor_ie_cb(esp_vendor_ie_cb_t cb, void *ctx) {
+	cb = cb;
+	ctx = ctx;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 /**
@@ -924,7 +985,9 @@ esp_err_t esp_wifi_set_vendor_ie_cb(esp_vendor_ie_cb_t cb, void *ctx) {
   *    - ESP_ERR_WIFI_NOT_ARG: invalid argument
   */
 esp_err_t esp_wifi_set_max_tx_power(int8_t power) {
+	power = power;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 /**
@@ -939,7 +1002,9 @@ esp_err_t esp_wifi_set_max_tx_power(int8_t power) {
   *    - ESP_ERR_INVALID_ARG: invalid argument
   */
 esp_err_t esp_wifi_get_max_tx_power(int8_t *power) {
+	power = power;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 /**
@@ -958,7 +1023,9 @@ esp_err_t esp_wifi_get_max_tx_power(int8_t *power) {
   *    - ESP_ERR_WIFI_NOT_INIT: WiFi is not initialized by esp_wifi_init
   */
 esp_err_t esp_wifi_set_event_mask(uint32_t mask) {
+	mask = mask;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 /**
@@ -972,7 +1039,9 @@ esp_err_t esp_wifi_set_event_mask(uint32_t mask) {
   *    - ESP_ERR_WIFI_ARG: invalid argument
   */
 esp_err_t esp_wifi_get_event_mask(uint32_t *mask) {
+	mask = mask;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 /**
@@ -1001,7 +1070,12 @@ esp_err_t esp_wifi_get_event_mask(uint32_t *mask) {
   */
 
 esp_err_t esp_wifi_80211_tx(wifi_interface_t ifx, const void *buffer, int len, bool en_sys_seq) {
+	ifx = ifx;
+	buffer = buffer;
+	len = len;
+	en_sys_seq = en_sys_seq;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 /**
@@ -1018,7 +1092,10 @@ esp_err_t esp_wifi_80211_tx(wifi_interface_t ifx, const void *buffer, int len, b
   */
 
 esp_err_t esp_wifi_set_csi_rx_cb(wifi_csi_cb_t cb, void *ctx) {
+	cb = cb;
+	ctx = ctx;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 /**
@@ -1033,7 +1110,9 @@ esp_err_t esp_wifi_set_csi_rx_cb(wifi_csi_cb_t cb, void *ctx) {
   *    - ESP_ERR_INVALID_ARG: invalid argument
   */
 esp_err_t esp_wifi_set_csi_config(const wifi_csi_config_t *config) {
+	config = config;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 /**
@@ -1048,7 +1127,9 @@ esp_err_t esp_wifi_set_csi_config(const wifi_csi_config_t *config) {
   *    - ESP_ERR_INVALID_ARG: invalid argument
   */
 esp_err_t esp_wifi_set_csi(bool en) {
+	en = en;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 /**
@@ -1062,7 +1143,9 @@ esp_err_t esp_wifi_set_csi(bool en) {
   *    - ESP_ERR_WIFI_ARG: Invalid argument, e.g. parameter is NULL, invalid GPIO number etc
   */
 esp_err_t esp_wifi_set_ant_gpio(const wifi_ant_gpio_config_t *config) {
+	config = config;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 /**
@@ -1076,7 +1159,9 @@ esp_err_t esp_wifi_set_ant_gpio(const wifi_ant_gpio_config_t *config) {
   *    - ESP_ERR_WIFI_ARG: invalid argument, e.g. parameter is NULL
   */
 esp_err_t esp_wifi_get_ant_gpio(wifi_ant_gpio_config_t *config) {
+	config = config;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 
@@ -1091,7 +1176,9 @@ esp_err_t esp_wifi_get_ant_gpio(wifi_ant_gpio_config_t *config) {
   *    - ESP_ERR_WIFI_ARG: Invalid argument, e.g. parameter is NULL, invalid antenna mode or invalid GPIO number
   */
 esp_err_t esp_wifi_set_ant(const wifi_ant_config_t *config) {
+	config = config;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 /**
@@ -1105,7 +1192,9 @@ esp_err_t esp_wifi_set_ant(const wifi_ant_config_t *config) {
   *    - ESP_ERR_WIFI_ARG: invalid argument, e.g. parameter is NULL
   */
 esp_err_t esp_wifi_get_ant(wifi_ant_config_t *config) {
+	config = config;
 	printf("%s() L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 }
 
 /**
@@ -1125,6 +1214,8 @@ esp_err_t esp_wifi_get_ant(wifi_ant_config_t *config) {
   */
 esp_err_t esp_smartconfig_start(sc_callback_t cb, ...) {
 	espr_t r;
+
+	cb = cb;
 
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
 

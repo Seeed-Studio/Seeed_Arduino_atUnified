@@ -44,7 +44,7 @@
  */
 void tcpip_adapter_init(void) {
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
-
+	return;
 }
 
 /**
@@ -58,8 +58,10 @@ void tcpip_adapter_init(void) {
  *         ESP_ERR_NO_MEM
  */
 esp_err_t tcpip_adapter_eth_start(uint8_t *mac, tcpip_adapter_ip_info_t *ip_info) {
+	mac = mac;
+	ip_info = ip_info;
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
-
+	return ESP_OK;
 }
 
 /**
@@ -75,8 +77,10 @@ esp_err_t tcpip_adapter_eth_start(uint8_t *mac, tcpip_adapter_ip_info_t *ip_info
  *         ESP_ERR_NO_MEM
  */
 esp_err_t tcpip_adapter_sta_start(uint8_t *mac, tcpip_adapter_ip_info_t *ip_info) {
+	mac = mac;
+	ip_info = ip_info;
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
-
+	return ESP_OK;
 }
 
 /**
@@ -94,8 +98,10 @@ esp_err_t tcpip_adapter_sta_start(uint8_t *mac, tcpip_adapter_ip_info_t *ip_info
  *         ESP_ERR_NO_MEM
  */
 esp_err_t tcpip_adapter_ap_start(uint8_t *mac, tcpip_adapter_ip_info_t *ip_info) {
+	mac = mac;
+	ip_info = ip_info;
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
-
+	return ESP_OK;
 }
 
 /**
@@ -110,9 +116,9 @@ esp_err_t tcpip_adapter_ap_start(uint8_t *mac, tcpip_adapter_ip_info_t *ip_info)
  *         ESP_ERR_TCPIP_ADAPTER_IF_NOT_READY
  */
 esp_err_t tcpip_adapter_stop(tcpip_adapter_if_t tcpip_if) {
+	tcpip_if = tcpip_if;
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
-
-}
+	return ESP_OK;}
 
 /**
  * @brief  Bring up an interface
@@ -125,8 +131,9 @@ esp_err_t tcpip_adapter_stop(tcpip_adapter_if_t tcpip_if) {
  *         ESP_ERR_TCPIP_ADAPTER_IF_NOT_READY
  */
 esp_err_t tcpip_adapter_up(tcpip_adapter_if_t tcpip_if) {
+	tcpip_if = tcpip_if;
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
-
+	return ESP_OK;
 }
 
 /**
@@ -231,8 +238,11 @@ esp_err_t tcpip_adapter_set_ip_info(tcpip_adapter_if_t tcpip_if, tcpip_adapter_i
  *      - ESP_ERR_TCPIP_ADAPTER_INVALID_PARAMS invalid params
  */
 esp_err_t tcpip_adapter_set_dns_info(tcpip_adapter_if_t tcpip_if, tcpip_adapter_dns_type_t type, tcpip_adapter_dns_info_t *dns) {
+	tcpip_if = tcpip_if;
+	type = type;
+	dns = dns;
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
-
+	return ESP_OK;
 }
 
 /**
@@ -251,8 +261,11 @@ esp_err_t tcpip_adapter_set_dns_info(tcpip_adapter_if_t tcpip_if, tcpip_adapter_
  *      - ESP_ERR_TCPIP_ADAPTER_INVALID_PARAMS invalid params
  */
 esp_err_t tcpip_adapter_get_dns_info(tcpip_adapter_if_t tcpip_if, tcpip_adapter_dns_type_t type, tcpip_adapter_dns_info_t *dns) {
+	tcpip_if = tcpip_if;
+	type = type;
+	dns = dns;
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
-
+	return ESP_OK;
 }
 
 /**
@@ -269,8 +282,10 @@ esp_err_t tcpip_adapter_get_dns_info(tcpip_adapter_if_t tcpip_if, tcpip_adapter_
  *         ESP_ERR_TCPIP_ADAPTER_INVALID_PARAMS
  */
 esp_err_t tcpip_adapter_get_old_ip_info(tcpip_adapter_if_t tcpip_if, tcpip_adapter_ip_info_t *ip_info) {
+	tcpip_if = tcpip_if;
+	ip_info = ip_info;
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
-
+	return ESP_OK;
 }
 
 /**
@@ -287,8 +302,10 @@ esp_err_t tcpip_adapter_get_old_ip_info(tcpip_adapter_if_t tcpip_if, tcpip_adapt
  *         ESP_ERR_TCPIP_ADAPTER_INVALID_PARAMS
  */
 esp_err_t tcpip_adapter_set_old_ip_info(tcpip_adapter_if_t tcpip_if, tcpip_adapter_ip_info_t *ip_info) {
+	tcpip_if = tcpip_if;
+	ip_info = ip_info;
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
-
+	return ESP_OK;
 }
 
 
@@ -306,8 +323,9 @@ esp_err_t tcpip_adapter_set_old_ip_info(tcpip_adapter_if_t tcpip_if, tcpip_adapt
  *         ESP_ERR_TCPIP_ADAPTER_INVALID_PARAMS
  */
 esp_err_t tcpip_adapter_create_ip6_linklocal(tcpip_adapter_if_t tcpip_if) {
+	tcpip_if = tcpip_if;
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
-
+	return ESP_OK;
 }
 
 /**
@@ -323,8 +341,10 @@ esp_err_t tcpip_adapter_create_ip6_linklocal(tcpip_adapter_if_t tcpip_if) {
  *         ESP_ERR_TCPIP_ADAPTER_INVALID_PARAMS
  */
 esp_err_t tcpip_adapter_get_ip6_linklocal(tcpip_adapter_if_t tcpip_if, ip6_addr_t *if_ip6) {
+	tcpip_if = tcpip_if;
+	if_ip6 = if_ip6;
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
-
+	return ESP_OK;
 }
 
 #if 0
@@ -347,9 +367,11 @@ esp_err_t tcpip_adapter_set_mac(tcpip_adapter_if_t tcpip_if, uint8_t *mac) {
  *
  * @return ESP_OK
  */
-esp_err_t tcpip_adapter_dhcps_get_status(tcpip_adapter_if_t tcpip_if, tcpip_adapter_dhcp_status_t *status) {
+esp_err_t tcpip_adapter_dhcps_get_status(tcpip_adapter_if_t tcpip_if, tcpip_adapter_dhcp_status_t *status) {\
+	tcpip_if = tcpip_if;
+	status = status;
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
-
+	return ESP_OK;
 }
 
 /**
@@ -366,8 +388,12 @@ esp_err_t tcpip_adapter_dhcps_get_status(tcpip_adapter_if_t tcpip_if, tcpip_adap
  *         ESP_ERR_TCPIP_ADAPTER_DHCP_ALREADY_STARTED
  */
 esp_err_t tcpip_adapter_dhcps_option(tcpip_adapter_option_mode_t opt_op, tcpip_adapter_option_id_t opt_id, void *opt_val, uint32_t opt_len) {
+	opt_op = opt_op;
+	opt_id = opt_id;
+	opt_val = opt_val;
+	opt_len = opt_len;
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
-
+	return ESP_OK;
 }
 
 /**
@@ -430,8 +456,10 @@ esp_err_t tcpip_adapter_dhcps_stop(tcpip_adapter_if_t tcpip_if) {
  * @return ESP_OK
  */
 esp_err_t tcpip_adapter_dhcpc_get_status(tcpip_adapter_if_t tcpip_if, tcpip_adapter_dhcp_status_t *status) {
+	tcpip_if = tcpip_if;
+	status = status;
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
-
+	return ESP_OK;
 }
 
 /**
@@ -447,8 +475,12 @@ esp_err_t tcpip_adapter_dhcpc_get_status(tcpip_adapter_if_t tcpip_if, tcpip_adap
  * @return ESP_OK
  */
 esp_err_t tcpip_adapter_dhcpc_option(tcpip_adapter_option_mode_t opt_op, tcpip_adapter_option_id_t opt_id, void *opt_val, uint32_t opt_len) {
+	opt_op = opt_op;
+	opt_id = opt_id;
+	opt_val = opt_val;
+	opt_len = opt_len;
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
-
+	return ESP_OK;
 }
 
 /**
@@ -515,8 +547,11 @@ esp_err_t tcpip_adapter_dhcpc_stop(tcpip_adapter_if_t tcpip_if) {
  * @return ESP_OK
  */
 esp_err_t tcpip_adapter_eth_input(void *buffer, uint16_t len, void *eb) {
+	buffer =  buffer;
+	len = len;
+	eb = eb;
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
-
+	return ESP_OK;
 }
 
 /**
@@ -531,8 +566,11 @@ esp_err_t tcpip_adapter_eth_input(void *buffer, uint16_t len, void *eb) {
  * @return ESP_OK
  */
 esp_err_t tcpip_adapter_sta_input(void *buffer, uint16_t len, void *eb) {
+	buffer = buffer;
+	len = len;
+	eb = eb;
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
-
+	return ESP_OK;
 }
 
 /**
@@ -547,8 +585,11 @@ esp_err_t tcpip_adapter_sta_input(void *buffer, uint16_t len, void *eb) {
  * @return ESP_OK
  */
 esp_err_t tcpip_adapter_ap_input(void *buffer, uint16_t len, void *eb) {
+	buffer = buffer;
+	len = len;
+	eb = eb;
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
-
+	return ESP_OK;
 }
 
 /**
@@ -564,8 +605,9 @@ esp_err_t tcpip_adapter_ap_input(void *buffer, uint16_t len, void *eb) {
  *         ESP_IF_MAX
  */
 esp_interface_t tcpip_adapter_get_esp_if(void *dev) {
+	dev = dev;
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
-
+	return ESP_OK;
 }
 
 /**
@@ -579,7 +621,10 @@ esp_interface_t tcpip_adapter_get_esp_if(void *dev) {
  *         ESP_ERR_TCPIP_ADAPTER_INVALID_PARAMS
  */
 esp_err_t tcpip_adapter_get_sta_list(wifi_sta_list_t *wifi_sta_list, tcpip_adapter_sta_list_t *tcpip_sta_list) {
+	wifi_sta_list = wifi_sta_list;
+	tcpip_sta_list = tcpip_sta_list;
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
+	return ESP_OK;
 
 }
 
@@ -595,8 +640,10 @@ esp_err_t tcpip_adapter_get_sta_list(wifi_sta_list_t *wifi_sta_list, tcpip_adapt
  *         ESP_ERR_TCPIP_ADAPTER_INVALID_PARAMS:parameter error
  */
 esp_err_t tcpip_adapter_set_hostname(tcpip_adapter_if_t tcpip_if, const char *hostname) {
+	tcpip_if = tcpip_if;
+	hostname = hostname;
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
-
+	return ESP_OK;
 }
 
 /**
@@ -610,8 +657,10 @@ esp_err_t tcpip_adapter_set_hostname(tcpip_adapter_if_t tcpip_if, const char *ho
  *         ESP_ERR_TCPIP_ADAPTER_INVALID_PARAMS:parameter error
  */
 esp_err_t tcpip_adapter_get_hostname(tcpip_adapter_if_t tcpip_if, const char **hostname) {
+	tcpip_if = tcpip_if;
+	hostname = hostname;
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
-
+	return ESP_OK;
 }
 
 /**
@@ -625,8 +674,10 @@ esp_err_t tcpip_adapter_get_hostname(tcpip_adapter_if_t tcpip_if, const char **h
  *         ESP_ERR_TCPIP_ADAPTER_INVALID_PARAMS:parameter error
  */
 esp_err_t tcpip_adapter_get_netif(tcpip_adapter_if_t tcpip_if, void ** netif) {
+	tcpip_if = tcpip_if;
+	netif = netif;
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
-
+	return ESP_OK;
 }
 
 /**
@@ -638,6 +689,7 @@ esp_err_t tcpip_adapter_get_netif(tcpip_adapter_if_t tcpip_if, void ** netif) {
  *          false: tcpip_if id DOWN
  */
 bool tcpip_adapter_is_netif_up(tcpip_adapter_if_t tcpip_if) {
+	tcpip_if = tcpip_if;
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
-
+	return true;
 }

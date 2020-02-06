@@ -30,7 +30,7 @@ netconn_fd_t* atu_fd2conn(int s) {
 		return NULL;
 	}
 	if (s >= maps_size) {
-		dump_tasks();
+		// dump_tasks();
 		return NULL;
 	}
 	return &netconn_maps[s];
@@ -55,7 +55,7 @@ int atu_conn2fd(esp_netconn_p netconn) {
 		}
 	}
 	if (i >= maps_size) {
-		esp_netconn_p* new_maps;
+		netconn_fd_t* new_maps;
 
 		new_maps = calloc(sizeof(netconn_fd_t), maps_size + 16);
 		if (!new_maps) {
@@ -90,6 +90,9 @@ int atu_socket(int domain, int type, int protocol) {
 	esp_conn_p econ;
 	netconn_fd_t* nf;
 	int fd;
+
+	domain = domain;
+	protocol = protocol;
 
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
 
@@ -170,14 +173,14 @@ int atu_getpeername_r (int s, struct sockaddr *name, socklen_t *namelen) {
 		return -1;
 	}
 
-	r = esp_conn_get_remote_ip(nf->conn, (esp_ip_t*)&remote);
+	r = esp_conn_get_remote_ip(esp_netconn_get_conn(nf->conn), (esp_ip_t*)&remote);
 	if (r != espOK) {
 		printf("Get peer name Fail error = %d\r\n", r);
 		return -1;
 	}
 
 	addr->sin_addr.s_addr = remote;
-	addr->sin_port = esp_conn_get_remote_port(nf->conn);
+	addr->sin_port = esp_conn_get_remote_port(esp_netconn_get_conn(nf->conn));
 	return 0;
 }
 
@@ -185,6 +188,8 @@ int atu_getsockopt_r (int s, int level, int optname, void *optval, socklen_t *op
 	struct timeval* tv;
 	netconn_fd_t* nf;
 	espr_t r;
+
+	level = level;
 
 	printf("%s(opt 0x%X) +++ L%d\r\n", __func__, optname, __LINE__);
 	nf = atu_fd2conn(s);
@@ -220,6 +225,8 @@ int atu_setsockopt_r (int s, int level, int optname, const void *optval, socklen
 	netconn_fd_t* nf;
 	int used = 0;
 	espr_t r;
+
+	level = level;
 
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
 	nf = atu_fd2conn(s);
@@ -297,6 +304,8 @@ int atu_connect_r(int s, const struct sockaddr *name, socklen_t namelen) {
 	netconn_fd_t* nf;
 	espr_t r;
 
+	namelen = namelen;
+
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
 	nf = atu_fd2conn(s);
 	if (!nf || !nf->conn) {
@@ -316,6 +325,8 @@ int atu_connect_r(int s, const struct sockaddr *name, socklen_t namelen) {
 int atu_listen_r(int s, int backlog) {
 	netconn_fd_t* nf;
 	espr_t r;
+
+	backlog = backlog;
 
 	printf("%s() +++ L%d\r\n", __func__, __LINE__);
 	nf = atu_fd2conn(s);
@@ -548,6 +559,7 @@ int atu_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *errorfds, st
 	int i;
 	fd_set* fds;
 
+	nfds = nfds;
 	printf("@S@\r\n");
 
 	if (readfds) {
