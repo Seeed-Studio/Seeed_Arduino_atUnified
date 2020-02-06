@@ -2,9 +2,8 @@ language: generic
 matrix:
   include:
     - env:
-        - BOARD="arduino:avr:uno"
-    - env:
-        - BOARD="Seeeduino:samd:seeed_XIAO_m0"
+        - BOARD="Seeeduino:samd:seeed_grove_ui_wireless"
+
 # default phases
 before_install:
   - mkdir -p "$HOME/bin"
@@ -23,6 +22,8 @@ before_install:
       cd "${HOME}/Arduino/libraries/${repositoryName}"
       cd "${TRAVIS_BUILD_DIR}"
     }
+  - installLibrary Seeed-Studio/esp-at-lib
+  - installLibrary Seeed-Studio/Seeed_Arduino_FreeRTOS
   - installLibrary Seeed-Studio/Seeed_Arduino_atUnified
   - buildExampleSketch() { arduino-cli compile  --warnings all --fqbn $BOARD $PWD/examples/$1 --verbose; }
   - buildExampleUtilitySketch() { arduino-cli compile --warnings all --fqbn $BOARD $PWD/examples/utility/$1 --verbose; }
@@ -30,11 +31,7 @@ install:
   - mkdir -p $HOME/Arduino/libraries
 script:
     - |
-      if [ "$BOARD" == "arduino:avr:uno" ]; then
-        buildExampleSketch nothing;
-      fi
-    - |
-      if [ "$BOARD" == "Seeeduino:samd:seeed_XIAO_m0" ]; then
+      if [ "$BOARD" == "Seeeduino:samd:seeed_grove_ui_wireless" ]; then
         buildExampleSketch nothing;
       fi
 notifications:
