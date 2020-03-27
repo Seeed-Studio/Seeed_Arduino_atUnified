@@ -111,7 +111,7 @@ int atu_socket(int domain, int type, int protocol) {
 
 	nc = esp_netconn_new(nc_type);
 	if (!nc) {
-		return -1;
+		return -2;
 	}
 
 	fd = atu_conn2fd(nc);
@@ -119,7 +119,12 @@ int atu_socket(int domain, int type, int protocol) {
 	econ = esp_netconn_get_conn(nc);
 	nf = atu_fd2conn(fd);
 	nf->nc_type = nc_type;
-	esp_conn_set_arg(econ, nf);
+	if (econ) {
+		esp_conn_set_arg(econ, nf);
+	} else {
+		printf("%s() L%d netconn_fd %d has no valid conn\r\n",
+		       __func__, __LINE__, fd);
+	}
 
 	return fd;
 }
@@ -375,10 +380,7 @@ int atu_recv_r(int s, void *mem, size_t len, int flags) {
 		}
 
 		if (r != espOK) {
-			esp_netconn_type_t nc_type;
-
-			nc_type = ((netconn_fd_t*)esp_conn_get_arg(econ))->nc_type;
-			if (nc_type == ESP_NETCONN_TYPE_TCP && !esp_conn_is_active(econ)) {
+			if (nf->nc_type == ESP_NETCONN_TYPE_TCP && !esp_conn_is_active(econ)) {
 				errno = EBADF;
 				return -1;
 			}
