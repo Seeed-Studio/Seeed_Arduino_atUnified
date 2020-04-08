@@ -168,36 +168,6 @@ esp_err_t mdns_service_remove(const char* service_type, const char* proto);
 esp_err_t mdns_service_instance_name_set(const char* service_type, const char* proto, const char* instance_name);
 
 /**
-    @brief  Set service port
-
-    @param  service_type service type (_http, _ftp, etc)
-    @param  proto        service protocol (_tcp, _udp)
-    @param  port         service port
-
-    @return
-       - ESP_OK success
-       - ESP_ERR_INVALID_ARG Parameter error
-       - ESP_ERR_NOT_FOUND Service not found
-*/
-esp_err_t mdns_service_port_set(const char* service_type, const char* proto, uint16_t port);
-
-/**
-    @brief  Replace all TXT items for service
-
-    @param  service_type service type (_http, _ftp, etc)
-    @param  proto        service protocol (_tcp, _udp)
-    @param  num_items    number of items in TXT data
-    @param  txt          array of TXT data (eg. {{"var","val"},{"other","2"}})
-
-    @return
-       - ESP_OK success
-       - ESP_ERR_INVALID_ARG Parameter error
-       - ESP_ERR_NOT_FOUND Service not found
-       - ESP_ERR_NO_MEM memory error
-*/
-esp_err_t mdns_service_txt_set(const char* service_type, const char* proto, mdns_txt_item_t txt[], uint8_t num_items);
-
-/**
     @brief  Set/Add TXT item for service TXT record
 
     @param  service_type service type (_http, _ftp, etc)
@@ -212,52 +182,6 @@ esp_err_t mdns_service_txt_set(const char* service_type, const char* proto, mdns
        - ESP_ERR_NO_MEM memory error
 */
 esp_err_t mdns_service_txt_item_set(const char* service_type, const char* proto, const char* key, const char* value);
-
-/**
-    @brief  Remove TXT item for service TXT record
-
-    @param  service_type service type (_http, _ftp, etc)
-    @param  proto        service protocol (_tcp, _udp)
-    @param  key          the key that you want to remove
-
-    @return
-       - ESP_OK success
-       - ESP_ERR_INVALID_ARG Parameter error
-       - ESP_ERR_NOT_FOUND Service not found
-       - ESP_ERR_NO_MEM memory error
-*/
-esp_err_t mdns_service_txt_item_remove(const char* service_type, const char* proto, const char* key);
-
-/**
-    @brief  Remove and free all services from mDNS server
-
-    @return
-       - ESP_OK success
-       - ESP_ERR_INVALID_ARG Parameter error
-*/
-esp_err_t mdns_service_remove_all();
-
-/**
-    @brief  Query mDNS for host or service
-           All following query methods are derived from this one
-
-    @param  name         service instance or host name (NULL for PTR queries)
-    @param  service_type service type (_http, _arduino, _ftp etc.) (NULL for host queries)
-    @param  proto        service protocol (_tcp, _udp, etc.) (NULL for host queries)
-    @param  type         type of query (MDNS_TYPE_*)
-    @param  timeout      time in milliseconds to wait for answers.
-    @param  max_results  maximum results to be collected
-    @param  results      pointer to the results of the query
-                        results must be freed using mdns_query_results_free below
-
-    @return
-       - ESP_OK success
-       - ESP_ERR_INVALID_STATE  mDNS is not running
-       - ESP_ERR_NO_MEM         memory error
-       - ESP_ERR_INVALID_ARG    timeout was not given
-*/
-esp_err_t mdns_query(const char* name, const char* service_type, const char* proto, uint16_t type, uint32_t timeout,
-                     size_t max_results, mdns_result_t** results);
 
 /**
     @brief  Free query results
@@ -283,24 +207,6 @@ void mdns_query_results_free(mdns_result_t* results);
 */
 esp_err_t mdns_query_ptr(const char* service_type, const char* proto, uint32_t timeout, size_t max_results,
                          mdns_result_t** results);
-
-/**
-    @brief  Query mDNS for SRV record
-
-    @param  instance_name    service instance name
-    @param  service_type     service type (_http, _arduino, _ftp etc.)
-    @param  proto            service protocol (_tcp, _udp, etc.)
-    @param  timeout          time in milliseconds to wait for answer.
-    @param  result           pointer to the result of the query
-
-    @return
-       - ESP_OK success
-       - ESP_ERR_INVALID_STATE  mDNS is not running
-       - ESP_ERR_NO_MEM         memory error
-       - ESP_ERR_INVALID_ARG    parameter error
-*/
-esp_err_t mdns_query_srv(const char* instance_name, const char* service_type, const char* proto, uint32_t timeout,
-                         mdns_result_t** result);
 
 /**
     @brief  Query mDNS for TXT record
@@ -334,21 +240,6 @@ esp_err_t mdns_query_txt(const char* instance_name, const char* service_type, co
        - ESP_ERR_INVALID_ARG    parameter error
 */
 esp_err_t mdns_query_a(const char* host_name, uint32_t timeout, ip4_addr_t* addr);
-
-/**
-    @brief  Query mDNS for A record
-
-    @param  host_name    host name to look for
-    @param  timeout      time in milliseconds to wait for answer. If 0, max_results needs to be defined
-    @param  addr         pointer to the resulting IP6 address
-
-    @return
-       - ESP_OK success
-       - ESP_ERR_INVALID_STATE  mDNS is not running
-       - ESP_ERR_NO_MEM         memory error
-       - ESP_ERR_INVALID_ARG    parameter error
-*/
-esp_err_t mdns_query_aaaa(const char* host_name, uint32_t timeout, ip6_addr_t* addr);
 
 /**
     @brief   System event handler
