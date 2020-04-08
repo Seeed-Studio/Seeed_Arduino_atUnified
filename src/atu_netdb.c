@@ -69,6 +69,7 @@ ip_addr_t dns_getserver(u8_t numdns) {
 	esp_ip_t dns[2];
 	espr_t r;
 
+	IP_ADDR4(&ip_zero, 0, 0, 0, 0);
 	if (numdns > 1) return ip_zero;
 
 	r = esp_dns_get_config(&dns[0], &dns[1], NULL, NULL, true);
@@ -76,7 +77,9 @@ ip_addr_t dns_getserver(u8_t numdns) {
 		return ip_zero;
 	}
 
-	return *(ip_addr_t*)&dns[numdns];
+	// avoid type align
+	memcpy(&ip_zero.u_addr.ip4.addr, &dns[numdns], sizeof(esp_ip_t));
+	return ip_zero;
 }
 
 esp_err_t esp_read_mac(uint8_t* mac, esp_mac_type_t type) {
