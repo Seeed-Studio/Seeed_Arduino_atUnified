@@ -179,7 +179,7 @@ int atu_getpeername_r (int s, struct sockaddr *name, socklen_t *namelen) {
 	}
 
 	r = esp_conn_get_remote_ip(esp_netconn_get_conn(nf->conn), (esp_ip_t*)&remote);
-	if (r != espOK) {
+	if (!r) {
 		printf("Get peer name Fail error = %d\r\n", r);
 		return -1;
 	}
