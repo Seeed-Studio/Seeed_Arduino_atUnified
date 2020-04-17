@@ -62,7 +62,7 @@
 #include "esp_err.h"
 #include "esp_wifi_types.h"
 #include "esp_event.h"
-#include "esp32-hal-log.h"
+#include "esp_hal_log.h"
 
 #ifdef __cplusplus
 extern "C" {

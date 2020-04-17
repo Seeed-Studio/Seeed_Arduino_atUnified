@@ -14,7 +14,7 @@
 
 #include "Seeed_atUnified.h"
 #include "mdns.h"
-#include "esp32-hal-log.h"
+#include "esp_hal_log.h"
 
 static char* mdns_hostname;
 

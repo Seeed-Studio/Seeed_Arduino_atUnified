@@ -24,6 +24,6 @@
 #include "esp_smartconfig.h"
 #include "esp_system.h"
 #include "tcpip_adapter.h"
-#include "esp32-hal-log.h"
+#include "esp_hal_log.h"
 
 #endif//_SEED_ATUNIFIED_H__

@@ -58,8 +58,7 @@
 #include "esp_wifi.h"
 #include "esp_at_lib.h"
 #include "esp_smartconfig.h"
-#include "esp32-hal-log.h"
-
+#include "esp_hal_log.h"
 
 /**
   * @brief  Init WiFi

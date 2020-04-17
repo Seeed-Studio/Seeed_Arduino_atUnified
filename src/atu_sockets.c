@@ -7,7 +7,7 @@
 #include "esp_at_lib.h"
 #include "atu_netdb.h"
 #include "atu_sockets.h"
-#include "esp32_hal_log.h"
+#include "esp_hal_log.h"
 
 #ifndef DEBUG
 #undef log_printf

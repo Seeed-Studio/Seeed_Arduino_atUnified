@@ -36,7 +36,7 @@
 #include "esp_err.h"
 #include "esp_wifi.h"
 #include "tcpip_adapter.h"
-#include "esp32-hal-log.h"
+#include "esp_hal_log.h"
 
 
 /**

@@ -8,7 +8,7 @@
 #include "esp_err.h"
 #include "atu_netdb.h"
 #include "esp_system.h"
-#include "esp32_hal_log.h"
+#include "esp_hal_log.h"
 
 err_t dns_gethostbyname(const char *hostname, ip_addr_t *addr,
                         dns_found_callback found, void *callback_arg) {

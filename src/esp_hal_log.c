@@ -2,7 +2,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <stdlib.h>
-#include "esp32-hal-log.h"
+#include "esp_hal_log.h"
 #include "esp_at_lib.h"
 
 //used by hal log
