@@ -7,6 +7,12 @@
 #include "esp_at_lib.h"
 #include "atu_netdb.h"
 #include "atu_sockets.h"
+#include "esp32_hal_log.h"
+
+#ifndef DEBUG
+#undef log_printf
+#define log_printf(...)
+#endif
 
 typedef struct netconn_fd_s {
 	esp_netconn_p conn;
@@ -94,7 +100,7 @@ int atu_socket(int domain, int type, int protocol) {
 	domain = domain;
 	protocol = protocol;
 
-	printf("%s() +++ L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 
 	switch (type) {
 	case SOCK_STREAM:
@@ -122,8 +128,7 @@ int atu_socket(int domain, int type, int protocol) {
 	if (econ) {
 		esp_conn_set_arg(econ, nf);
 	} else {
-		printf("%s() L%d netconn_fd %d has no valid conn\r\n",
-		       __func__, __LINE__, fd);
+		log_d(" netconn_fd %d has no valid conn\r\n", fd);
 	}
 
 	return fd;
@@ -134,7 +139,7 @@ int atu_accept_r(int s, struct sockaddr *addr, socklen_t *addrlen) {
 	esp_netconn_p client;
 	espr_t r;
 
-	printf("%s() +++ L%d socket = %d\r\n", __func__, __LINE__, s);
+	log_d(" socket = %d\r\n", s);
 	nf = atu_fd2conn(s);
 	if (!nf || !nf->conn) {
 		return -1;
@@ -151,7 +156,7 @@ int atu_bind_r(int s, const struct sockaddr *name, socklen_t namelen) {
 	netconn_fd_t* nf;
 	espr_t r;
 
-	printf("%s() +++ L%d socket = %d\r\n", __func__, __LINE__, s);
+	log_d(" socket = %d\r\n", s);
 	nf = atu_fd2conn(s);
 	if (!nf || !nf->conn) {
 		return -1;
@@ -159,7 +164,7 @@ int atu_bind_r(int s, const struct sockaddr *name, socklen_t namelen) {
 
 	r = esp_netconn_bind(nf->conn, ntohs(addr->sin_port));
 	if (r != espOK) {
-		printf("NETCONN bind Fail error = %d\r\n", r);
+		log_e("NETCONN bind Fail error = %d\r\n", r);
 		return -1;
 	}
 	return 0;
@@ -172,7 +177,7 @@ int atu_getpeername_r (int s, struct sockaddr *name, socklen_t *namelen) {
 	esp_port_t port;
 	espr_t r;
 
-	printf("%s() +++ L%d socket = %d\r\n", __func__, __LINE__, s);
+	log_d(" socket = %d\r\n", s);
 	nf = atu_fd2conn(s);
 	if (!nf || !nf->conn) {
 		return -1;
@@ -180,7 +185,7 @@ int atu_getpeername_r (int s, struct sockaddr *name, socklen_t *namelen) {
 
 	r = esp_conn_get_remote_ip(esp_netconn_get_conn(nf->conn), (esp_ip_t*)&remote);
 	if (!r) {
-		printf("Get peer name Fail error = %d\r\n", r);
+		log_e("Get peer name Fail error = %d\r\n", r);
 		return -1;
 	}
 
@@ -196,10 +201,10 @@ int atu_getsockopt_r (int s, int level, int optname, void *optval, socklen_t *op
 
 	level = level;
 
-	printf("%s(opt 0x%X) +++ L%d\r\n", __func__, optname, __LINE__);
+	log_d("%s(opt 0x%X) +++ L%d\r\n", __func__, optname, __LINE__);
 	nf = atu_fd2conn(s);
 	if (!nf || !nf->conn) {
-		printf("%s() Invalid connection\r\n", __func__);
+		log_e("%s() Invalid connection\r\n", __func__);
 		return -1;
 	}
 
@@ -217,7 +222,7 @@ int atu_getsockopt_r (int s, int level, int optname, void *optval, socklen_t *op
 		break;
 
 	default:
-		printf("getsockopt_r() unhandled option %d \r\n", optname);
+		log_e("getsockopt_r() unhandled option %d \r\n", optname);
 		errno = EINVAL;
 		return -1;
 		break;
@@ -233,7 +238,7 @@ int atu_setsockopt_r (int s, int level, int optname, const void *optval, socklen
 
 	level = level;
 
-	printf("%s() +++ L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 	nf = atu_fd2conn(s);
 	if (!nf || !nf->conn) {
 		return -1;
@@ -274,7 +279,7 @@ int atu_setsockopt_r (int s, int level, int optname, const void *optval, socklen
 	}
 
 	if (!used) {
-		printf("setsockopt_r() unhandled option %d \r\n", optname);
+		log_e("setsockopt_r() unhandled option %d \r\n", optname);
 		errno = EINVAL;
 		return -1;
 	}
@@ -284,7 +289,7 @@ int atu_setsockopt_r (int s, int level, int optname, const void *optval, socklen
 int atu_close_r(int s) {
 	netconn_fd_t* nf;
 
-	printf("%s() +++ L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 	nf = atu_fd2conn(s);
 
 	if (!nf || !nf->conn) {
@@ -311,7 +316,7 @@ int atu_connect_r(int s, const struct sockaddr *name, socklen_t namelen) {
 
 	namelen = namelen;
 
-	printf("%s() +++ L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 	nf = atu_fd2conn(s);
 	if (!nf || !nf->conn) {
 		return -1;
@@ -319,7 +324,7 @@ int atu_connect_r(int s, const struct sockaddr *name, socklen_t namelen) {
 
 	esp_ip_2_str(ip_str, *(esp_ip_t*)&addr->sin_addr.s_addr);
 
-	printf("%s() connect to ip %s\r\n", __func__, ip_str);
+	log_i("%s() connect to ip %s\r\n", __func__, ip_str);
 	r = esp_netconn_connect_ex(nf->conn, ip_str, ntohs(addr->sin_port), nf->keep_alive, NULL, 0, 0);
 	if (r != espOK) {
 		return -1;
@@ -333,7 +338,7 @@ int atu_listen_r(int s, int backlog) {
 
 	backlog = backlog;
 
-	printf("%s() +++ L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 	nf = atu_fd2conn(s);
 	if (!nf || !nf->conn) {
 		return -1;
@@ -386,7 +391,7 @@ int atu_recv_r(int s, void *mem, size_t len, int flags) {
 			}
 			if (r != espTIMEOUT) {
 				errno = ENOENT;
-				printf("recv_r %d\r\n", r);
+				log_d("recv_r %d\r\n", r);
 				return -1;
 			}
 		}
@@ -415,7 +420,7 @@ int atu_recv_r(int s, void *mem, size_t len, int flags) {
 		nf->pbuf = NULL;
 	}
 
-	printf("copied = %d, bytes_left = %d\r\n", sz, nf->bytes_left);
+	log_v("copied = %d, bytes_left = %d\r\n", sz, nf->bytes_left);
 
 	errno = EWOULDBLOCK;
 	return sz;
@@ -430,14 +435,14 @@ int atu_send_r(int s, const void *dataptr, size_t size, int flags) {
 	netconn_fd_t* nf;
 	espr_t r;
 
-	printf("@T@\r\n");
+	log_d("@T@\r\n");
 	nf = atu_fd2conn(s);
 	if (!nf || !nf->conn) {
 		return -1;
 	}
 	r = esp_netconn_write(nf->conn, dataptr, size);
 	if (r != espOK) {
-		printf("NETCONN write Fail error = %d\r\n", r);
+		log_d("NETCONN write Fail error = %d\r\n", r);
 		return -1;
 	}
 	esp_netconn_flush(nf->conn);
@@ -452,7 +457,7 @@ int atu_sendto_r(int s, const void *dataptr, size_t size, int flags,
 	esp_conn_p econ;
 	espr_t r;
 
-	printf("@T- socket = %d\r\n", s);
+	log_d("@T- socket = %d\r\n", s);
 
 	nf = atu_fd2conn(s);
 	if (!nf || !nf->conn) {
@@ -465,7 +470,7 @@ int atu_sendto_r(int s, const void *dataptr, size_t size, int flags,
 
 		ar = atu_connect_r(s, to, tolen);
 		if (ar < 0) {
-			printf("NETCONN connect fail %d\r\n", ar);
+			log_d("NETCONN connect fail %d\r\n", ar);
 			return ar;
 		}
 	}
@@ -473,7 +478,7 @@ int atu_sendto_r(int s, const void *dataptr, size_t size, int flags,
 	*(uint32_t*)&remote = addr->sin_addr.s_addr;
 	r = esp_netconn_sendto(nf->conn, &remote, ntohs(addr->sin_port), dataptr, size);
 	if (r != espOK) {
-		printf("NETCONN sendto Fail error = %d\r\n", r);
+		log_e("NETCONN sendto Fail error = %d\r\n", r);
 		return -1;
 	}
 	return size;
@@ -483,10 +488,10 @@ int atu_ioctl_r(int s, long cmd, void *argp) {
 	netconn_fd_t* nf;
 	esp_conn_p econ;
 
-	printf("#");
+	log_printf("#");
 	nf = atu_fd2conn(s);
 	if (!nf || !nf->conn) {
-		printf(")");
+		log_printf(")");
 		return -1;
 	}
 
@@ -510,12 +515,12 @@ int atu_ioctl_r(int s, long cmd, void *argp) {
 			if (r != espOK) {
 				if (!esp_conn_is_active(econ)) {
 					errno = EBADF;
-					printf("0)");
+					log_printf("0)");
 					return -1;
 				}
 				if (r != espTIMEOUT) {
 					errno = ENOENT;
-					printf("1)");
+					log_printf("1)");
 					return -1;
 				}
 			}
@@ -529,14 +534,14 @@ int atu_ioctl_r(int s, long cmd, void *argp) {
 			*(int*)argp = nf->bytes_left;
 		}
 	}
-	printf("2)");
+	log_printf("2)");
 	return 0;
 }
 
 int atu_fcntl_r(int s, int cmd, int val) {
 	netconn_fd_t* nf;
 
-	printf("@C@\r\n");
+	log_printf("@C@\r\n");
 	nf = atu_fd2conn(s);
 	if (!nf || !nf->conn) {
 		return -1;
@@ -550,7 +555,7 @@ int atu_fcntl_r(int s, int cmd, int val) {
 		break;
 
 	default:
-		printf("atu_fcntl_r() unhandled cmd %d \r\n", cmd);
+		log_e("atu_fcntl_r() unhandled cmd %d \r\n", cmd);
 		errno = EINVAL;
 		return -1;
 	}
@@ -562,7 +567,7 @@ int atu_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *errorfds, st
 	fd_set* fds;
 
 	nfds = nfds;
-	printf("@S@\r\n");
+	log_printf("@S@\r\n");
 
 	if (readfds) {
 		fds = readfds;

@@ -4,6 +4,7 @@
  */
 #include "esp_wps.h"
 #include "esp_at_lib.h"
+#include "esp32-hal-log.h"
 
 
 /**
@@ -22,7 +23,7 @@
 esp_err_t esp_wifi_wps_enable(const esp_wps_config_t *config) {
 	espr_t r;
 
-	printf("%s() +++ L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 
 	r = esp_wps_configure(1, NULL, NULL, true);
 	if (r != espOK) {
@@ -43,7 +44,7 @@ esp_err_t esp_wifi_wps_enable(const esp_wps_config_t *config) {
 esp_err_t esp_wifi_wps_disable(void) {
 	espr_t r;
 
-	printf("%s() +++ L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 
 	r = esp_wps_configure(0, NULL, NULL, true);
 	if (r != espOK) {

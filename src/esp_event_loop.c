@@ -4,6 +4,7 @@
  */
 #include "esp_at_lib.h"
 #include "esp_event_loop.h"
+#include "esp32-hal-log.h"
 
 /**
  * \brief           Save callback function for high level (AtWiFi) event
@@ -95,7 +96,7 @@ static espr_t at_unified_cb(esp_evt_t* evt) {
 
 	/*!< DNS domain service finished */
 	default:
-		printf("at_unified evt: %d\r\n", esp_evt_get_type(evt));
+		log_e("at_unified evt: %d\r\n", esp_evt_get_type(evt));
 		return espERR;
 	}
 

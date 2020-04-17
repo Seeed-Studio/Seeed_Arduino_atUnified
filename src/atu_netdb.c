@@ -8,12 +8,13 @@
 #include "esp_err.h"
 #include "atu_netdb.h"
 #include "esp_system.h"
+#include "esp32_hal_log.h"
 
 err_t dns_gethostbyname(const char *hostname, ip_addr_t *addr,
                         dns_found_callback found, void *callback_arg) {
 	espr_t r;
 
-	printf("%s() +++ L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 
 	r = esp_dns_gethostbyname(hostname, (esp_ip_t*)addr, NULL, NULL, true);
 	if (r != espOK) {
@@ -50,7 +51,7 @@ void dns_setserver(u8_t numdns, const ip_addr_t *dnsserver) {
 	char dns1[18];
 	char dns2[18];
 
-	printf("%s() +++ L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 
 	if (numdns > 1) return;
 
@@ -85,7 +86,7 @@ ip_addr_t dns_getserver(u8_t numdns) {
 esp_err_t esp_read_mac(uint8_t* mac, esp_mac_type_t type) {
 	espr_t r = espOK;
 
-	printf("%s() +++ L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 
 	switch (type) {
 	case ESP_MAC_WIFI_STA:

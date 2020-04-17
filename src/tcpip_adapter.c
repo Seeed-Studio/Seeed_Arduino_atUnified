@@ -36,6 +36,8 @@
 #include "esp_err.h"
 #include "esp_wifi.h"
 #include "tcpip_adapter.h"
+#include "esp32-hal-log.h"
+
 
 /**
  * @brief  Initialize tcpip adapter
@@ -43,7 +45,7 @@
  * This will initialize TCPIP stack inside.
  */
 void tcpip_adapter_init(void) {
-	printf("%s() +++ L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 	return;
 }
 
@@ -126,7 +128,7 @@ esp_err_t tcpip_adapter_set_ip_info(tcpip_adapter_if_t tcpip_if, tcpip_adapter_i
  */
 esp_err_t tcpip_adapter_create_ip6_linklocal(tcpip_adapter_if_t tcpip_if) {
 	tcpip_if = tcpip_if;
-	printf("%s() +++ L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 	return ESP_OK;
 }
 
@@ -145,7 +147,7 @@ esp_err_t tcpip_adapter_create_ip6_linklocal(tcpip_adapter_if_t tcpip_if) {
 esp_err_t tcpip_adapter_get_ip6_linklocal(tcpip_adapter_if_t tcpip_if, ip6_addr_t *if_ip6) {
 	tcpip_if = tcpip_if;
 	if_ip6 = if_ip6;
-	printf("%s() +++ L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 	return ESP_OK;
 }
 
@@ -167,7 +169,7 @@ esp_err_t tcpip_adapter_dhcps_option(tcpip_adapter_option_mode_t opt_op, tcpip_a
 	opt_id = opt_id;
 	opt_val = opt_val;
 	opt_len = opt_len;
-	printf("%s() +++ L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 	return ESP_OK;
 }
 
@@ -185,7 +187,7 @@ esp_err_t tcpip_adapter_dhcps_option(tcpip_adapter_option_mode_t opt_op, tcpip_a
 esp_err_t tcpip_adapter_dhcps_start(tcpip_adapter_if_t tcpip_if) {
 	espr_t r;
 
-	printf("%s() +++ L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 
 	if (tcpip_if == TCPIP_ADAPTER_IF_AP) {
 		r = esp_dhcp_configure(0, 1, 1, NULL, NULL, 1);
@@ -211,7 +213,7 @@ esp_err_t tcpip_adapter_dhcps_start(tcpip_adapter_if_t tcpip_if) {
 esp_err_t tcpip_adapter_dhcps_stop(tcpip_adapter_if_t tcpip_if) {
 	espr_t r;
 
-	printf("%s() +++ L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 
 	if (tcpip_if == TCPIP_ADAPTER_IF_AP) {
 		r = esp_dhcp_configure(0, 1, 0, NULL, NULL, 1);
@@ -237,7 +239,7 @@ esp_err_t tcpip_adapter_dhcps_stop(tcpip_adapter_if_t tcpip_if) {
 esp_err_t tcpip_adapter_dhcpc_start(tcpip_adapter_if_t tcpip_if) {
 	espr_t r;
 
-	printf("%s() +++ L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 
 	if (tcpip_if == TCPIP_ADAPTER_IF_STA) {
 		r = esp_dhcp_configure(1, 0, 1, NULL, NULL, 1);
@@ -263,7 +265,7 @@ esp_err_t tcpip_adapter_dhcpc_start(tcpip_adapter_if_t tcpip_if) {
 esp_err_t tcpip_adapter_dhcpc_stop(tcpip_adapter_if_t tcpip_if) {
 	espr_t r;
 
-	printf("%s() +++ L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 
 	if (tcpip_if == TCPIP_ADAPTER_IF_STA) {
 		r = esp_dhcp_configure(1, 0, 0, NULL, NULL, 1);
@@ -288,7 +290,7 @@ esp_err_t tcpip_adapter_dhcpc_stop(tcpip_adapter_if_t tcpip_if) {
 esp_err_t tcpip_adapter_set_hostname(tcpip_adapter_if_t tcpip_if, const char *hostname) {
 	tcpip_if = tcpip_if;
 	hostname = hostname;
-	printf("%s() +++ L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 	return ESP_OK;
 }
 
@@ -305,7 +307,7 @@ esp_err_t tcpip_adapter_set_hostname(tcpip_adapter_if_t tcpip_if, const char *ho
 esp_err_t tcpip_adapter_get_hostname(tcpip_adapter_if_t tcpip_if, const char **hostname) {
 	tcpip_if = tcpip_if;
 	hostname = hostname;
-	printf("%s() +++ L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 	return ESP_OK;
 }
 
@@ -322,7 +324,7 @@ esp_err_t tcpip_adapter_get_hostname(tcpip_adapter_if_t tcpip_if, const char **h
 esp_err_t tcpip_adapter_get_netif(tcpip_adapter_if_t tcpip_if, void ** netif) {
 	tcpip_if = tcpip_if;
 	netif = netif;
-	printf("%s() +++ L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 	return ESP_OK;
 }
 
@@ -336,6 +338,6 @@ esp_err_t tcpip_adapter_get_netif(tcpip_adapter_if_t tcpip_if, void ** netif) {
  */
 bool tcpip_adapter_is_netif_up(tcpip_adapter_if_t tcpip_if) {
 	tcpip_if = tcpip_if;
-	printf("%s() +++ L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 	return true;
 }

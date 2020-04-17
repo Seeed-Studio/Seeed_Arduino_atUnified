@@ -14,6 +14,7 @@
 
 #include "Seeed_atUnified.h"
 #include "mdns.h"
+#include "esp32-hal-log.h"
 
 static char* mdns_hostname;
 
@@ -28,7 +29,7 @@ static char* mdns_hostname;
  *     - ESP_ERR_WIFI_NOT_INIT when WiFi is not initialized by eps_wifi_init
  */
 esp_err_t mdns_init() {
-	printf("%s() L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 	return ESP_OK;
 }
 /**
@@ -36,7 +37,7 @@ esp_err_t mdns_init() {
  *
  */
 void mdns_free() {
-	printf("%s() L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 	return ESP_OK;
 }
 /**
@@ -53,7 +54,7 @@ void mdns_free() {
 esp_err_t mdns_hostname_set(const char * hostname) {
 	char* name = mdns_hostname;
 
-	printf("%s() L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 
 	if (name) {
 		free(name);
@@ -83,7 +84,7 @@ esp_err_t mdns_hostname_set(const char * hostname) {
  */
 esp_err_t mdns_instance_name_set(const char * instance_name) {
 	instance_name = instance_name;
-	printf("%s() L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 	return ESP_OK;
 }
 /**
@@ -106,12 +107,12 @@ esp_err_t mdns_service_add(const char * instance_name, const char * service_type
 	const char* name;
 	espr_t r;
 
-	printf("%s() +++ L%d\r\r\n", __func__, __LINE__);
+	log_v(" +++\r\r\n");
 
 	name = instance_name? instance_name: mdns_hostname;
 	r = esp_mdns_configure(1, name, proto, port, NULL, NULL, true);
 	if (r != espOK) {
-		printf("esp_mdns_configure() return error %d\r\r\n",  r);
+		log_e("esp_mdns_configure() return error %d\r\r\n",  r);
 	}
 	return ESPR_TO_ESP_ERR(r);
 }
@@ -130,7 +131,7 @@ esp_err_t mdns_service_add(const char * instance_name, const char * service_type
 esp_err_t mdns_service_remove(const char * service_type, const char * proto) {
 	service_type = service_type;
 	proto = proto;
-	printf("%s() L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 	return ESP_OK;
 }
 /**
@@ -150,7 +151,7 @@ esp_err_t mdns_service_instance_name_set(const char * service_type, const char *
 	service_type = service_type;
 	proto = proto;
 	instance_name = instance_name;
-	printf("%s() L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 	return ESP_OK;
 }
 
@@ -173,7 +174,7 @@ esp_err_t mdns_service_txt_item_set(const char * service_type, const char * prot
 	proto = proto;
 	key = key;
 	value = value;
-	printf("%s() L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 	return ESP_OK;
 }
 
@@ -184,7 +185,7 @@ esp_err_t mdns_service_txt_item_set(const char * service_type, const char * prot
  */
 void mdns_query_results_free(mdns_result_t * results) {
 	results = results;
-	printf("%s() L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 	return ESP_OK;
 }
 /**
@@ -208,7 +209,7 @@ esp_err_t mdns_query_ptr(const char * service_type, const char * proto, uint32_t
 	timeout = timeout;
 	max_results = max_results;
 	results = results;
-	printf("%s() L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 	return ESP_OK;
 }
 
@@ -229,7 +230,7 @@ esp_err_t mdns_query_a(const char * host_name, uint32_t timeout, ip4_addr_t * ad
 	host_name = host_name;
 	timeout = timeout;
 	addr = addr;
-	printf("%s() L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 	return ESP_OK;
 }
 
@@ -244,6 +245,6 @@ esp_err_t mdns_query_a(const char * host_name, uint32_t timeout, ip4_addr_t * ad
 esp_err_t mdns_handle_system_event(void *ctx, system_event_t *event) {
 	ctx = ctx;
 	event = event;
-	printf("%s() L%d\r\n", __func__, __LINE__);
+	log_v(" +++\r\n");
 	return ESP_OK;
 }
