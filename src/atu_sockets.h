@@ -548,9 +548,7 @@ static inline int sendto(int s, const void* dataptr, size_t size, int flags, con
 static inline int socket(int domain, int type, int protocol) {
     return atu_socket(domain, type, protocol);
 }
-static inline int select(int nfds, fd_set* readset, fd_set* writeset, fd_set* exceptset, struct timeval* timeout) {
-    return atu_select(nfds, readset, writeset, exceptset, timeout);
-}
+int select(int nfds, fd_set* readset, fd_set* writeset, fd_set* exceptset, struct timeval* timeout);
 static inline int ioctlsocket(int s, long cmd, void* argp) {
     return atu_ioctl_r(s, cmd, argp);
 }

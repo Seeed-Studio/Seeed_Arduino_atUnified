@@ -587,6 +587,10 @@ int atu_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *errorfds, st
 	return 0;
 }
 
+int select(int nfds, fd_set* readset, fd_set* writeset, fd_set* exceptset, struct timeval* timeout) {
+    return atu_select(nfds, readset, writeset, exceptset, timeout);
+}
+
 u16_t atu_htons(u16_t x) {
 	u16_t y = ((x << 8) | (x >> 8));
 	return y;
