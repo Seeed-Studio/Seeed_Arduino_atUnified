@@ -7,13 +7,13 @@ cache:
     - ~/arduino_ide
     - ~/.arduino15/packages/
 
-before_install:
-   - wget -c https://files.seeedstudio.com/arduino/seeed-arduino-ci.sh
+#before_install:
+#   - wget -c https://files.seeedstudio.com/arduino/seeed-arduino-ci.sh
 
 script:
    - chmod +x seeed-arduino-ci.sh
    - cat $PWD/seeed-arduino-ci.sh
-   - bash $PWD/seeed-arduino-ci.sh test
+   - $PWD/seeed-arduino-ci.sh -b "Seeeduino:samd:seeed_wio_terminal" nothing Seeed-Studio/esp-at-lib.git Seeed-Studio/Seeed_Arduino_FreeRTOS.git
 
 notifications:
   email:
