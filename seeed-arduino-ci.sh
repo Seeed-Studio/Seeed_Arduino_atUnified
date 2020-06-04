@@ -31,6 +31,8 @@ while getopts "b:h" opt; do
 	case "$opt" in
 	b)	boards[$bd_ctr]="$OPTARG"
 		bd_ctr=$(( bd_ctr + 1 ))
+		shift
+		shift
 		;;
 	h)	_ci_usage;;
 	esac
@@ -45,7 +47,7 @@ fi
 
 echo BOARDS="${boards[@]}"
 
-if [ ! -f /usr/bin/arduino-cli  ] 
+if [ ! -f /usr/bin/arduino-cli ]
 then
     mkdir -p "$HOME/bin"
     wget https://files.seeedstudio.com/arduino/arduino-cli_linux_64bit.tar.gz
@@ -99,8 +101,7 @@ is_skip="false"
 for board in "${boards[@]}"
 do 
     #list all the libraries examples
-    for example in examples/*
-    do 
+    for example in $(find examples/ -mindepth 1 -maxdepth 1 -type d); do
         for ub in "${unbuild[@]}"
         do
             #check if the example in unbuild 
