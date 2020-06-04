@@ -7,7 +7,8 @@
 
 #include <Arduino.h>
 
-#define LWIP_PROVIDE_ERRNO 1
+//#define LWIP_PROVIDE_ERRNO 1
+#define LWIP_ERRNO_INCLUDE "sys/errno.h"
 #include "esp_at_lib.h"
 #include "lwip/err.h"
 #include "lwip/errno.h"
