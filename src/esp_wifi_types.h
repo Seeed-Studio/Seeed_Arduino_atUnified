@@ -51,12 +51,17 @@ typedef enum {
 
 /** @brief Structure describing WiFi country-based regional restrictions. */
 typedef struct {
+    /* Not support */
     char                  cc[3];   /**< country code string */
     uint8_t               schan;   /**< start channel */
     uint8_t               nchan;   /**< total channel number */
     int8_t
     max_tx_power;   /**< This field is used for getting WiFi maximum transmitting power, call esp_wifi_set_max_tx_power to set the maximum transmitting power. */
     wifi_country_policy_t policy;  /**< country policy */
+
+    /* RTL872X specific */
+    uint16_t              cnty_rtl;
+    uint16_t              channel_plan;
 } wifi_country_t;
 
 typedef enum {

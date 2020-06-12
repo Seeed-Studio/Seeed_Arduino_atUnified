@@ -586,10 +586,15 @@ esp_err_t esp_wifi_get_channel(uint8_t *primary, wifi_second_chan_t *second) {
   *    - ESP_ERR_INVALID_ARG: invalid argument
   */
 esp_err_t esp_wifi_set_country(const wifi_country_t *country) {
-	country = country;
+	esp_country_t ec;
+
 	log_v(" +++\r\n");
-	return ESP_OK;
+
+	ec.country = country->cnty_rtl;
+	ec.channel_plan = country->channel_plan;
+	return ESPR_TO_ESP_ERR(esp_set_wifi_country(ec, NULL, NULL, true));
 }
+
 
 /**
   * @brief     get the current country info
@@ -602,9 +607,17 @@ esp_err_t esp_wifi_set_country(const wifi_country_t *country) {
   *    - ESP_ERR_INVALID_ARG: invalid argument
   */
 esp_err_t esp_wifi_get_country(wifi_country_t *country) {
-	country = country;
+	esp_country_t ec[1];
+	espr_t r;
+
 	log_v(" +++\r\n");
-	return ESP_OK;
+	r = esp_get_wifi_country(ec, NULL, NULL, true);
+
+	if (espOK == r) {
+		country->cnty_rtl = ec->country;
+		country->channel_plan = ec->channel_plan;
+	}
+	return ESPR_TO_ESP_ERR(r);
 }
 
 
