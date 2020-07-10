@@ -5,17 +5,22 @@ function _ci_usage() {
 	cat <<EOF
 Used in (Travis) CI script to build/test arduino project examples.
 
-Syntax: $0 [ -b boards-spec1 -b boards-spec2 -b ... ] example-spec [ depend-library1 depend-library2 ... ]
+Syntax: $0 [ -b boards-spec1 -b boards-spec2 -b ... ] [ -s ] example-spec [ depend-library1 depend-library2 ... ]
 
         boards-spec(s): subject to Originze:platform:board, such as "arduino:avr:uno"
 
-        example-spec:   subject to example1:prevent-board/example2:prevent-board/...
+	-s            : only build examples specified in example-spec,
+	                or else build all the found examples (if without -s option).
+
+        example-spec:   subject to example1:prevent-boards/example2:prevent-boards/...
                         example(s) must exist in the project examples folder
-                        prevent-board must exist in boards-spec(s), specify the boards not build
+                        if no prevents-boards, ':' could be discard.
+                        prevent-boards must exist in boards-spec(s), specify the boards not build, 
+                                       multiple boards could seperated by ','
 
         depend-library(s):
-        	        specify the depend libraries for this project, such as Seeed-Studio/Seeed_Arduino_FreeRTOS.git
-        	        only support library repository located at https://github.com.
+                        specify the depend libraries for this project, such as 'Seeed-Studio/Seeed_Arduino_FreeRTOS.git'
+                        only support library repository located at https://github.com.
 
 EOF
 	exit 2
@@ -27,13 +32,16 @@ if [ "$#" == "0" ]; then
 fi
 
 bd_ctr=0
-while getopts "b:h" opt; do
+find_examples=y
+while getopts "b:sh" opt; do
 	case "$opt" in
 	b)	boards[$bd_ctr]="$OPTARG"
 		bd_ctr=$(( bd_ctr + 1 ))
-		shift
-		shift
 		;;
+
+	s)	find_examples=
+		;;
+
 	h)	_ci_usage;;
 	esac
 done
@@ -47,82 +55,106 @@ fi
 
 echo BOARDS="${boards[@]}"
 
-if [ ! -f /usr/bin/arduino-cli ]
-then
-    mkdir -p "$HOME/bin"
-    wget https://files.seeedstudio.com/arduino/arduino-cli_linux_64bit.tar.gz
-    tar xf arduino-cli_linux_64bit.tar.gz
-    rm arduino-cli_linux_64bit.tar.gz
-    mv arduino-cli  $HOME/bin/
-    export PATH="$PATH:$HOME/bin"
+# : <<\__EOF__
+if ! which arduino-cli; then
+	if [ ! -f "$HOME/bin/arduino-cli" ]; then
+		mkdir -p "$HOME/bin"
+		# wget https://files.seeedstudio.com/arduino/arduino-cli_linux_64bit.tar.gz
+		# tar xf arduino-cli_linux_64bit.tar.gz
+		# rm arduino-cli_linux_64bit.tar.gz
+		# mv arduino-cli $HOME/bin/
+		curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR="$HOME/bin" sh
+	fi
+	export PATH="$PATH:$HOME/bin"
 fi
 
+arduino-cli core update-index --additional-urls https://downloads.arduino.cc/packages/package_index.json
 arduino-cli core update-index --additional-urls http://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json
-
+arduino-cli core install arduino:avr    --additional-urls https://downloads.arduino.cc/packages/package_index.json
 arduino-cli core install Seeeduino:samd --additional-urls http://files.seeedstudio.com/arduino/package_seeeduino_boards_index.json
-arduino-cli core install arduino:avr
-
 
 mkdir -p "$HOME/Arduino/libraries"
 ln -s "$PWD" "$HOME/Arduino/libraries/."
+# __EOF__
 
-unbuild[0]=""
+# parse the example-spec, such as
+# readAngle:seeed_XIAO_m0,uno/fullFunction:seeed_XIAO_m0/resultoutput:seeed_XIAO_m0/fullFunction:uno/resultoutput:uno
+eval exam_spec="\$$OPTIND"
+exam_spec=( $(echo "$exam_spec" | tr '/' ' ') )
+# echo exam_spec=${exam_spec[@]}
 
-counter=1
-for arg; do 
-    #arg[1] = readAngle:seeed_XIAO_m0/fullFunction:seeed_XIAO_m0/resultoutput:seeed_XIAO_m0/readAngle:uno/fullFunction:uno/resultoutput:uno
-    if [ $counter == "1" ]
-    then
-        #Separate strings with "/"
-        slash_num=$(echo $arg | awk -F"/" '{print NF-1}')
-        for (( d=1; d<(slash_num+2); d++ ))
-        do
-            echo $arg |  cut -d "/" -f $d
+# the bash MAP make the example names uniq.
+declare -A exam_map
+declare -a examples
+unbuild=" "
+for (( i = 0; i < ${#exam_spec[@]}; i++ )); do
+	k=${exam_spec[i]%%:*}
+	v=${exam_spec[i]#*:}
+	exam_map[$k]="$v"
 
-            #storage substring into unbuild arrag
-            unbuild[$d]=$(echo $arg |  cut -d "/" -f $d )
-        done
-    else
-        echo $arg
-        #Get all the arduino dependent software
-        if [[ -d "$HOME/Arduino/libraries/$(echo $arg |  cut -d "/" -f 2)" ]]
-        then
-            ls $HOME/Arduino/libraries/$(echo $arg |  cut -d "/" -f 2)
-        else
-            git clone https://github.com/$arg  $HOME/Arduino/libraries/$(echo $arg |  cut -d "/" -f 2)
-        fi
-    fi
-    counter=$((counter+1))
+	# no ':'
+	if [ "$k" == "$v" ]; then
+		continue
+	fi
+
+	exam_bds=( $(echo $v | tr ',' ' ') )
+	for (( vi = 0; vi < ${#exam_bds[@]}; vi++ )); do
+		unbuild="$unbuild$k:${exam_bds[vi]} "
+	done
+done
+examples=${!exam_map[@]}
+# echo unbuild=$unbuild
+
+# shift out all argument begin with '-'
+for (( i = 0; i < $OPTIND; i++)); do
+	shift
+done
+# Get all the arduino dependent software
+for arg in "$@"; do
+	libname=$(echo $arg | cut -d "/" -f 2)
+	if [[ -d "$HOME/Arduino/libraries/$libname" ]]; then
+		ls $HOME/Arduino/libraries/$libname
+	else
+		git clone https://github.com/$arg $HOME/Arduino/libraries/$libname
+		true
+	fi
 done
 
+if [ "X$find_examples" != "X" ]; then
+	unset examples
 
-is_skip="false"
+	exam_cnt=0
+	exam_found=$(if test -d examples; then cd examples; find -type f -iname "*\.ino"; fi)
+	for i in $exam_found; do
+		v=${i%/*.ino}
+		examples[$exam_cnt]=${v#./}
+		(( exam_cnt++ ))
+	done
+fi
+echo examples=${examples[@]}
 
-for board in "${boards[@]}"
-do 
-    #list all the libraries examples
-    for example in $(find examples/ -mindepth 1 -maxdepth 1 -type d); do
-        for ub in "${unbuild[@]}"
-        do
-            #check if the example in unbuild 
-            if [ "${example:9}:$(echo $board | cut -d ":" -f 3)" == "$ub" ]
-            then
-                is_skip="true"
-                echo "skip...................$ub"
-            fi
-        done
-        if [ "${is_skip}" == "false" ]
-        then
-            echo ${example:9} $board
-            arduino-cli compile  --warnings all --fqbn $board $PWD/examples/${example:9}  --verbose; 
-            if [ $? -eq 0 ]
-            then
-                echo "Success !!!!"
-            else
-                echo "Failure: I did not found IP address in file. Script failed" >&2
-                exit 1
-            fi
-        fi
-        is_skip="false"
-    done
+#: <<\__EOF__
+for i in ${examples[@]}; do
+	example=$( echo $i | tr '@' '/' )
+	for board in "${boards[@]}"; do
+		pair=${example}:${board##*:}
+		v=$(expr "$unbuild" : ".* $pair .*")
+		[ $v -ne 0 ] && continue
+
+		echo "Build ########## $example ########## on $board  ##########"
+		arduino-cli compile  --warnings all --fqbn $board $PWD/examples/${example} --verbose
+		r=$?
+		[ $r -eq 0 ] && {
+			echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+			echo "%%%OK%%%"
+			echo "       %%%%%%%%%% $example %%%%%%%%%% on $board"
+		} || {
+			echo "%%%ERR%%%"
+			echo "       %%%%%%%%%% $example %%%%%%%%%% on $board"
+			exit 1
+		}
+	done
 done
+# __EOF__
+
+exit 0
