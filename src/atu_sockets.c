@@ -247,12 +247,19 @@ int atu_setsockopt_r (int s, int level, int optname, const void *optval, socklen
 	if (level == SOL_SOCKET) {
 		switch (optname) {
 		case SO_RCVTIMEO:
-			tv = (struct timeval*)optval;
-			esp_netconn_set_receive_timeout(nf->conn, tv->tv_sec * 1000 + tv->tv_usec / 1000);
-			used = 1;
+			if (optlen == sizeof(struct timeval)) {
+				tv = (struct timeval*)optval;
+				esp_netconn_set_receive_timeout(nf->conn, tv->tv_sec * 1000 + tv->tv_usec / 1000);
+				used = 1;
+			}
+			else if (optlen == sizeof(int)) {
+				esp_netconn_set_receive_timeout(nf->conn, *(int*)optval);
+				used = 1;
+			}
 			break;
 
 		case SO_KEEPALIVE:
+			if (optlen != sizeof(int)) break;
 			nf->keep_alive = *(const int*)optval;
 			used = 1;
 			break;
@@ -386,8 +393,7 @@ int atu_recv_r(int s, void *mem, size_t len, int flags) {
 
 		if (r != espOK) {
 			if (nf->nc_type == ESP_NETCONN_TYPE_TCP && !esp_conn_is_active(econ)) {
-				errno = EBADF;
-				return -1;
+				return 0;
 			}
 			if (r != espTIMEOUT) {
 				errno = ENOENT;
@@ -396,7 +402,8 @@ int atu_recv_r(int s, void *mem, size_t len, int flags) {
 			}
 		}
 		if (nf->pbuf == NULL) {
-			return 0;
+			errno = EWOULDBLOCK;
+			return -1;
 		}
 
 		plen = esp_pbuf_length(nf->pbuf, 0);
@@ -422,7 +429,6 @@ int atu_recv_r(int s, void *mem, size_t len, int flags) {
 
 	log_v("copied = %d, bytes_left = %d\r\n", sz, nf->bytes_left);
 
-	errno = EWOULDBLOCK;
 	return sz;
 }
 
