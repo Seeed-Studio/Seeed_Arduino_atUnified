@@ -363,6 +363,8 @@ esp_err_t esp_wifi_scan_get_ap_records(uint16_t *number, wifi_ap_record_t *ap_re
 		ap->primary = aps[i].ch;
 
 		ap->rssi = aps[i].rssi;
+		
+		ap->authmode = aps[i].ecn;
 
 		ap->phy_11b = esp_sta_is_ap_802_11b(&aps[i]);
 		ap->phy_11g = esp_sta_is_ap_802_11g(&aps[i]);
